@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build shared
+        run: npm run build -w @compasso/shared
+
+      - name: Type-check API
+        run: npx tsc --noEmit -p apps/api/tsconfig.json
+
+      - name: Type-check Web
+        run: npx tsc --noEmit -p apps/web/tsconfig.json
+
+      - name: Build API
+        run: npm run build -w @compasso/api
+
+      - name: Build Web
+        run: npm run build -w @compasso/web
+
+      - name: Test API
+        run: npm run test:run -w @compasso/api
