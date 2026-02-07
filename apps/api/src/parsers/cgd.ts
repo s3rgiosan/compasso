@@ -62,9 +62,7 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string[]> {
   return allLines;
 }
 
-export async function parseCGDPDF(buffer: Buffer): Promise<ParseResult> {
-  const fileHash = generateFileHash(buffer);
-  const lines = await extractTextFromPDF(buffer);
+export function parseCGDLines(lines: string[]): Omit<ParseResult, 'fileHash'> {
   const text = lines.join('\n');
 
   const transactions: ParsedTransaction[] = [];
@@ -125,7 +123,15 @@ export async function parseCGDPDF(buffer: Buffer): Promise<ParseResult> {
     });
   }
 
-  return { transactions, periodStart, periodEnd, fileHash };
+  return { transactions, periodStart, periodEnd };
+}
+
+export async function parseCGDPDF(buffer: Buffer): Promise<ParseResult> {
+  const fileHash = generateFileHash(buffer);
+  const lines = await extractTextFromPDF(buffer);
+  const result = parseCGDLines(lines);
+
+  return { ...result, fileHash };
 }
 
 export const cgd: BankParserDefinition = {

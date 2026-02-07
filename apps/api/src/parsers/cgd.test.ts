@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { parseEuropeanDecimal, parseCGDPDF } from './cgd.js';
+import { parseEuropeanDecimal, parseCGDLines } from './cgd.js';
 
 describe('parseEuropeanDecimal', () => {
   it('should parse standard European decimal format', () => {
@@ -40,72 +38,123 @@ describe('parseEuropeanDecimal', () => {
   });
 });
 
-const pdfPath = resolve(__dirname, '../../../../data/202601.pdf');
-const pdfExists = existsSync(pdfPath);
+describe('parseCGDLines', () => {
+  const sampleLines = [
+    'Período 2026-01-01 a 2026-01-31',
+    'SALDO ANTERIOR 1.500,00',
+    '- - 2026-01-05 COMPRA 1234 CONTINENTE -45,30 1.454,70',
+    '- - 2026-01-10 TFI EMPRESA XPTO 2.000,00 3.454,70',
+    '- - 2026-01-15 PAGAMENTO TSU -150,00 3.304,70',
+  ];
 
-describe.skipIf(!pdfExists)('parseCGDPDF', () => {
-  const pdfBuffer = pdfExists ? readFileSync(pdfPath) : Buffer.alloc(0);
-
-  it('should return a ParseResult with a fileHash', async () => {
-    const result = await parseCGDPDF(pdfBuffer);
-    expect(result).toHaveProperty('transactions');
-    expect(result).toHaveProperty('periodStart');
-    expect(result).toHaveProperty('periodEnd');
-    expect(result).toHaveProperty('fileHash');
-    expect(result.fileHash).toMatch(/^[a-f0-9]{64}$/);
+  it('should extract the statement period', () => {
+    const result = parseCGDLines(sampleLines);
+    expect(result.periodStart).toBe('2026-01-01');
+    expect(result.periodEnd).toBe('2026-01-31');
   });
 
-  it('should extract the statement period', async () => {
-    const result = await parseCGDPDF(pdfBuffer);
-    expect(result.periodStart).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(result.periodEnd).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  it('should return null period when not present', () => {
+    const result = parseCGDLines(['- - 2026-01-05 COMPRA LOJA -10,00 990,00']);
+    expect(result.periodStart).toBeNull();
+    expect(result.periodEnd).toBeNull();
   });
 
-  it('should parse transactions', async () => {
-    const result = await parseCGDPDF(pdfBuffer);
-    expect(result.transactions.length).toBeGreaterThan(0);
+  it('should parse transactions', () => {
+    const result = parseCGDLines(sampleLines);
+    expect(result.transactions).toHaveLength(3);
   });
 
-  it('should correctly identify income transactions', async () => {
-    const result = await parseCGDPDF(pdfBuffer);
-    const incomes = result.transactions.filter((t) => t.isIncome);
-    expect(incomes.length).toBeGreaterThan(0);
+  it('should correctly identify expense transactions', () => {
+    const result = parseCGDLines(sampleLines);
+    const expense = result.transactions[0];
+    expect(expense.isIncome).toBe(false);
+    expect(expense.amount).toBe(45.3);
+    expect(expense.balance).toBe(1454.7);
+  });
 
-    // All amounts must be positive (Math.abs)
+  it('should correctly identify income transactions', () => {
+    const result = parseCGDLines(sampleLines);
+    const income = result.transactions[1];
+    expect(income.isIncome).toBe(true);
+    expect(income.amount).toBe(2000);
+    expect(income.balance).toBe(3454.7);
+  });
+
+  it('should extract dates correctly', () => {
+    const result = parseCGDLines(sampleLines);
+    expect(result.transactions[0].date).toBe('2026-01-05');
+    expect(result.transactions[1].date).toBe('2026-01-10');
+    expect(result.transactions[2].date).toBe('2026-01-15');
+  });
+
+  it('should set valueDate equal to date', () => {
+    const result = parseCGDLines(sampleLines);
+    for (const tx of result.transactions) {
+      expect(tx.valueDate).toBe(tx.date);
+    }
+  });
+
+  it('should extract descriptions', () => {
+    const result = parseCGDLines(sampleLines);
+    expect(result.transactions[0].description).toContain('COMPRA');
+    expect(result.transactions[1].description).toContain('TFI');
+    expect(result.transactions[2].description).toContain('PAGAMENTO');
+  });
+
+  it('should store amount as absolute value', () => {
+    const result = parseCGDLines(sampleLines);
     for (const tx of result.transactions) {
       expect(tx.amount).toBeGreaterThan(0);
     }
   });
 
-  it('should parse the first transaction correctly', async () => {
-    const result = await parseCGDPDF(pdfBuffer);
-    const first = result.transactions[0];
-    expect(first.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(first.description).toBeTruthy();
-    expect(first.amount).toBeGreaterThan(0);
-    expect(typeof first.isIncome).toBe('boolean');
-  });
-
-  it('should parse the last transaction correctly', async () => {
-    const result = await parseCGDPDF(pdfBuffer);
-    const last = result.transactions[result.transactions.length - 1];
-    expect(last.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    expect(last.description).toBeTruthy();
-    expect(last.amount).toBeGreaterThan(0);
-  });
-
-  it('should have balance values for all transactions', async () => {
-    const result = await parseCGDPDF(pdfBuffer);
+  it('should have balance values for all transactions', () => {
+    const result = parseCGDLines(sampleLines);
     for (const tx of result.transactions) {
       expect(tx.balance).toEqual(expect.any(Number));
     }
   });
 
-  it('should set suggestedCategory fields to null', async () => {
-    const result = await parseCGDPDF(pdfBuffer);
+  it('should set suggestedCategory fields to null', () => {
+    const result = parseCGDLines(sampleLines);
     for (const tx of result.transactions) {
       expect(tx.suggestedCategoryId).toBeNull();
       expect(tx.suggestedCategoryName).toBeNull();
     }
+  });
+
+  it('should preserve raw text', () => {
+    const result = parseCGDLines(sampleLines);
+    expect(result.transactions[0].rawText).toBe(sampleLines[2]);
+  });
+
+  it('should skip lines without enough amounts', () => {
+    const lines = ['- - 2026-01-05 SOME ENTRY 100,00'];
+    const result = parseCGDLines(lines);
+    expect(result.transactions).toHaveLength(0);
+  });
+
+  it('should skip non-transaction lines', () => {
+    const lines = [
+      'SALDO CONTABILISTICO 5.000,00',
+      'Some header text',
+      '',
+    ];
+    const result = parseCGDLines(lines);
+    expect(result.transactions).toHaveLength(0);
+  });
+
+  it('should handle amounts with thousand separators', () => {
+    const lines = ['- - 2026-01-20 TFI SALARIO 1.234,56 5.234,56'];
+    const result = parseCGDLines(lines);
+    expect(result.transactions[0].amount).toBe(1234.56);
+    expect(result.transactions[0].balance).toBe(5234.56);
+  });
+
+  it('should handle accent variants in period header', () => {
+    const lines = ['Periodo 2026-02-01 a 2026-02-28'];
+    const result = parseCGDLines(lines);
+    expect(result.periodStart).toBe('2026-02-01');
+    expect(result.periodEnd).toBe('2026-02-28');
   });
 });
