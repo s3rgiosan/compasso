@@ -5,7 +5,7 @@ import { Search, ArrowUpRight, ArrowDownRight, Trash2, Repeat, Download } from '
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import {
   Table,
   TableBody,
@@ -207,30 +207,30 @@ export default function Transactions() {
                 className="pl-9"
               />
             </div>
-            <Select
+            <SearchableSelect
               value={selectedYear?.toString() || ''}
-              onChange={(e) => {
-                updateParams({ year: e.target.value || undefined, page: undefined });
+              onChange={(val) => {
+                updateParams({ year: val || undefined, page: undefined });
               }}
               options={[
                 { value: '', label: t('transactions.allYears') },
                 ...years.map((y) => ({ value: y, label: y.toString() })),
               ]}
             />
-            <Select
+            <SearchableSelect
               value={selectedMonth?.toString() || ''}
-              onChange={(e) => {
-                updateParams({ month: e.target.value || undefined, page: undefined });
+              onChange={(val) => {
+                updateParams({ month: val || undefined, page: undefined });
               }}
               options={[
                 { value: '', label: t('transactions.allMonths') },
                 ...MONTH_KEYS.map((key, i) => ({ value: i + 1, label: t(`months.${key}`) })),
               ]}
             />
-            <Select
+            <SearchableSelect
               value={selectedCategory?.toString() || ''}
-              onChange={(e) => {
-                updateParams({ category: e.target.value || undefined, page: undefined });
+              onChange={(val) => {
+                updateParams({ category: val || undefined, page: undefined });
               }}
               options={[
                 { value: '', label: t('transactions.allCategories') },
@@ -238,13 +238,13 @@ export default function Transactions() {
                 ...[...categories]
                   .filter((c) => c.name.toLowerCase() !== 'uncategorized')
                   .sort((a, b) => a.name.localeCompare(b.name))
-                  .map((c) => ({ value: c.id, label: c.name })),
+                  .map((c) => ({ value: c.id, label: c.name, color: c.color ?? undefined })),
               ]}
             />
-            <Select
+            <SearchableSelect
               value={selectedType}
-              onChange={(e) => {
-                updateParams({ type: e.target.value, page: undefined });
+              onChange={(val) => {
+                updateParams({ type: val, page: undefined });
               }}
               options={[
                 { value: 'all', label: t('transactions.allTypes') },
