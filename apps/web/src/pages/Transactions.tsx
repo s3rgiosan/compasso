@@ -223,7 +223,7 @@ export default function Transactions() {
               }}
               options={[
                 { value: '', label: t('transactions.allCategories') },
-                ...categories.map((c) => ({ value: c.id, label: c.name })),
+                ...[...categories].sort((a, b) => a.name.localeCompare(b.name)).map((c) => ({ value: c.id, label: c.name })),
               ]}
             />
             <Select
