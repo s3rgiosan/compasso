@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { Search, ArrowUpRight, ArrowDownRight, Trash2, Repeat, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -43,21 +44,38 @@ export default function Transactions() {
   const { t } = useTranslation();
   const { currentWorkspace, loading: workspaceLoading } = useWorkspace();
   const { showToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState<PaginatedResponse<TransactionWithCategory> | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [banks, setBanks] = useState<Array<{ id: string; name: string }>>([]);
   const [years, setYears] = useState<number[]>([]);
-  const [selectedYear, setSelectedYear] = useState<number | undefined>();
-  const [selectedMonth, setSelectedMonth] = useState<number | undefined>();
-  const [selectedCategory, setSelectedCategory] = useState<number | undefined>();
-  const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense'>('all');
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: number; description: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
+
+  // Derive filter state from URL search params
+  const selectedYear = searchParams.get('year') ? parseInt(searchParams.get('year')!) : undefined;
+  const selectedMonth = searchParams.get('month') ? parseInt(searchParams.get('month')!) : undefined;
+  const selectedCategory = searchParams.get('category') ? parseInt(searchParams.get('category')!) : undefined;
+  const selectedType = (searchParams.get('type') || 'all') as 'all' | 'income' | 'expense';
+  const search = searchParams.get('search') || '';
+  const page = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 0;
+
+  const updateParams = useCallback((updates: Record<string, string | undefined>) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      for (const [key, value] of Object.entries(updates)) {
+        if (value === undefined || value === '' || value === '0' || value === 'all') {
+          next.delete(key);
+        } else {
+          next.set(key, value);
+        }
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   useEffect(() => {
     async function loadInitialData() {
@@ -181,8 +199,7 @@ export default function Transactions() {
                 placeholder={t('transactions.search')}
                 value={search}
                 onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(0);
+                  updateParams({ search: e.target.value, page: undefined });
                 }}
                 className="pl-9"
               />
@@ -190,8 +207,7 @@ export default function Transactions() {
             <Select
               value={selectedYear?.toString() || ''}
               onChange={(e) => {
-                setSelectedYear(e.target.value ? parseInt(e.target.value) : undefined);
-                setPage(0);
+                updateParams({ year: e.target.value || undefined, page: undefined });
               }}
               options={[
                 { value: '', label: t('transactions.allYears') },
@@ -201,8 +217,7 @@ export default function Transactions() {
             <Select
               value={selectedMonth?.toString() || ''}
               onChange={(e) => {
-                setSelectedMonth(e.target.value ? parseInt(e.target.value) : undefined);
-                setPage(0);
+                updateParams({ month: e.target.value || undefined, page: undefined });
               }}
               options={[
                 { value: '', label: t('transactions.allMonths') },
@@ -212,8 +227,7 @@ export default function Transactions() {
             <Select
               value={selectedCategory?.toString() || ''}
               onChange={(e) => {
-                setSelectedCategory(e.target.value ? parseInt(e.target.value) : undefined);
-                setPage(0);
+                updateParams({ category: e.target.value || undefined, page: undefined });
               }}
               options={[
                 { value: '', label: t('transactions.allCategories') },
@@ -223,8 +237,7 @@ export default function Transactions() {
             <Select
               value={selectedType}
               onChange={(e) => {
-                setSelectedType(e.target.value as 'all' | 'income' | 'expense');
-                setPage(0);
+                updateParams({ type: e.target.value, page: undefined });
               }}
               options={[
                 { value: 'all', label: t('transactions.allTypes') },
@@ -264,7 +277,7 @@ export default function Transactions() {
                 totalPages={totalPages}
                 total={data?.total ?? 0}
                 pageSize={PAGE_SIZE}
-                onPageChange={setPage}
+                onPageChange={(p) => updateParams({ page: p.toString() })}
               />
               <div className="border rounded-lg overflow-hidden mt-4">
                 <Table>
@@ -352,7 +365,7 @@ export default function Transactions() {
                   totalPages={totalPages}
                   total={data?.total ?? 0}
                   pageSize={PAGE_SIZE}
-                  onPageChange={setPage}
+                  onPageChange={(p) => updateParams({ page: p.toString() })}
                 />
               </div>
             </>

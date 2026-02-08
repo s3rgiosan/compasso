@@ -16,7 +16,8 @@
     "build:api": "npm run build -w @compasso/api",
     "build:web": "npm run build -w @compasso/web",
     "lint": "eslint . --ext .ts,.tsx",
-    "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "docker:up": "docker compose up --build -d"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
