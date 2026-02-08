@@ -40,7 +40,7 @@ describe('GET /api/backup/export', () => {
       categories: [],
       ledgers: [],
     };
-    vi.mocked(exportWorkspaceData).mockReturnValue(backup as WorkspaceBackup);
+    vi.mocked(exportWorkspaceData).mockReturnValue(backup as unknown as WorkspaceBackup);
     vi.mocked(requireWorkspaceMembership).mockReturnValue('owner');
 
     const res = await request(app).get('/api/backup/export?workspaceId=1');

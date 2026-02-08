@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
 import { createTestApp, TEST_USER } from './test-helpers.js';
 import { AppError } from '../errors.js';
+import type { Category, CategoryWithPatterns } from '@compasso/shared';
 
 vi.mock('../middleware/auth.js', () => ({
-  authMiddleware: vi.fn((_req: any, _res: any, next: any) => {
-    _req.user = TEST_USER;
-    _req.sessionId = 'test-session-id';
+  authMiddleware: vi.fn((req: Request, _res: Response, next: NextFunction) => {
+    req.user = TEST_USER;
+    req.sessionId = 'test-session-id';
     next();
   }),
 }));
@@ -50,7 +52,7 @@ beforeEach(() => {
 describe('GET /api/categories', () => {
   it('returns 200 with category list', async () => {
     const result = { total: 2, limit: 50, offset: 0, items: [{ id: 1 }, { id: 2 }] };
-    vi.mocked(listCategories).mockReturnValue(result as any);
+    vi.mocked(listCategories).mockReturnValue(result as ReturnType<typeof listCategories>);
 
     const res = await request(app).get('/api/categories?workspaceId=1');
 
@@ -59,7 +61,7 @@ describe('GET /api/categories', () => {
   });
 
   it('defaults limit to 50 and offset to 0', async () => {
-    vi.mocked(listCategories).mockReturnValue({ items: [] } as any);
+    vi.mocked(listCategories).mockReturnValue({ items: [] } as ReturnType<typeof listCategories>);
 
     await request(app).get('/api/categories?workspaceId=1');
 
@@ -67,7 +69,7 @@ describe('GET /api/categories', () => {
   });
 
   it('uses custom limit and offset', async () => {
-    vi.mocked(listCategories).mockReturnValue({ items: [] } as any);
+    vi.mocked(listCategories).mockReturnValue({ items: [] } as ReturnType<typeof listCategories>);
 
     await request(app).get('/api/categories?workspaceId=1&limit=10&offset=20');
 
@@ -82,7 +84,7 @@ describe('GET /api/categories', () => {
   });
 
   it('checks workspace membership', async () => {
-    vi.mocked(listCategories).mockReturnValue({ items: [] } as any);
+    vi.mocked(listCategories).mockReturnValue({ items: [] } as ReturnType<typeof listCategories>);
 
     await request(app).get('/api/categories?workspaceId=1');
 
@@ -93,7 +95,7 @@ describe('GET /api/categories', () => {
 describe('GET /api/categories/:id', () => {
   it('returns 200 with category', async () => {
     const category = { id: 1, name: 'Food', patterns: [] };
-    vi.mocked(getCategoryWithPatterns).mockReturnValue(category as any);
+    vi.mocked(getCategoryWithPatterns).mockReturnValue(category as CategoryWithPatterns);
 
     const res = await request(app).get('/api/categories/1?workspaceId=1');
 
@@ -102,7 +104,7 @@ describe('GET /api/categories/:id', () => {
   });
 
   it('passes optional bankId', async () => {
-    vi.mocked(getCategoryWithPatterns).mockReturnValue({} as any);
+    vi.mocked(getCategoryWithPatterns).mockReturnValue({} as CategoryWithPatterns);
 
     await request(app).get('/api/categories/1?workspaceId=1&bank=novo_banco');
 
@@ -110,7 +112,7 @@ describe('GET /api/categories/:id', () => {
   });
 
   it('passes undefined when bankId is omitted', async () => {
-    vi.mocked(getCategoryWithPatterns).mockReturnValue({} as any);
+    vi.mocked(getCategoryWithPatterns).mockReturnValue({} as CategoryWithPatterns);
 
     await request(app).get('/api/categories/1?workspaceId=1');
 
@@ -128,7 +130,7 @@ describe('GET /api/categories/:id', () => {
   });
 
   it('checks workspace membership', async () => {
-    vi.mocked(getCategoryWithPatterns).mockReturnValue({} as any);
+    vi.mocked(getCategoryWithPatterns).mockReturnValue({} as CategoryWithPatterns);
 
     await request(app).get('/api/categories/1?workspaceId=2');
 
@@ -138,14 +140,14 @@ describe('GET /api/categories/:id', () => {
 
 describe('GET /api/categories/patterns/exists', () => {
   it('returns 200 with existence result', async () => {
-    vi.mocked(checkPatternExists).mockReturnValue(true as any);
+    vi.mocked(checkPatternExists).mockReturnValue({ exists: true });
 
     const res = await request(app).get(
       '/api/categories/patterns/exists?workspaceId=1&bankId=novo_banco&pattern=test',
     );
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ success: true, data: true });
+    expect(res.body).toEqual({ success: true, data: { exists: true } });
   });
 
   it('returns 400 when bankId is missing', async () => {
@@ -167,7 +169,7 @@ describe('GET /api/categories/patterns/exists', () => {
   });
 
   it('checks workspace membership', async () => {
-    vi.mocked(checkPatternExists).mockReturnValue(true as any);
+    vi.mocked(checkPatternExists).mockReturnValue({ exists: true });
 
     await request(app).get(
       '/api/categories/patterns/exists?workspaceId=3&bankId=novo_banco&pattern=test',
@@ -180,7 +182,7 @@ describe('GET /api/categories/patterns/exists', () => {
 describe('POST /api/categories', () => {
   it('returns 201 with created category', async () => {
     const category = { id: 1, name: 'New' };
-    vi.mocked(createCategory).mockReturnValue(category as any);
+    vi.mocked(createCategory).mockReturnValue(category as Category);
 
     const res = await request(app)
       .post('/api/categories')
@@ -200,7 +202,7 @@ describe('POST /api/categories', () => {
   });
 
   it('passes category data to service', async () => {
-    vi.mocked(createCategory).mockReturnValue({} as any);
+    vi.mocked(createCategory).mockReturnValue({} as Category);
 
     await request(app)
       .post('/api/categories')
@@ -215,7 +217,7 @@ describe('POST /api/categories', () => {
   });
 
   it('checks workspace membership', async () => {
-    vi.mocked(createCategory).mockReturnValue({} as any);
+    vi.mocked(createCategory).mockReturnValue({} as Category);
 
     await request(app)
       .post('/api/categories')
@@ -227,7 +229,7 @@ describe('POST /api/categories', () => {
 
 describe('PUT /api/categories/:id', () => {
   it('returns 200 on success', async () => {
-    vi.mocked(updateCategory).mockReturnValue(undefined as any);
+    vi.mocked(updateCategory).mockReturnValue(undefined as never);
 
     const res = await request(app)
       .put('/api/categories/1')
@@ -247,7 +249,7 @@ describe('PUT /api/categories/:id', () => {
   });
 
   it('passes id, workspaceId, and update data to service', async () => {
-    vi.mocked(updateCategory).mockReturnValue(undefined as any);
+    vi.mocked(updateCategory).mockReturnValue(undefined as never);
 
     await request(app)
       .put('/api/categories/5')
@@ -261,7 +263,7 @@ describe('PUT /api/categories/:id', () => {
   });
 
   it('checks workspace membership', async () => {
-    vi.mocked(updateCategory).mockReturnValue(undefined as any);
+    vi.mocked(updateCategory).mockReturnValue(undefined as never);
 
     await request(app)
       .put('/api/categories/1')
@@ -273,7 +275,7 @@ describe('PUT /api/categories/:id', () => {
 
 describe('DELETE /api/categories/:id', () => {
   it('returns 200 on success', async () => {
-    vi.mocked(deleteCategory).mockReturnValue(undefined as any);
+    vi.mocked(deleteCategory).mockReturnValue(undefined as never);
 
     const res = await request(app).delete('/api/categories/1?workspaceId=1');
 
@@ -282,7 +284,7 @@ describe('DELETE /api/categories/:id', () => {
   });
 
   it('passes id and workspaceId to service', async () => {
-    vi.mocked(deleteCategory).mockReturnValue(undefined as any);
+    vi.mocked(deleteCategory).mockReturnValue(undefined as never);
 
     await request(app).delete('/api/categories/5?workspaceId=3');
 
@@ -296,7 +298,7 @@ describe('DELETE /api/categories/:id', () => {
   });
 
   it('checks workspace membership', async () => {
-    vi.mocked(deleteCategory).mockReturnValue(undefined as any);
+    vi.mocked(deleteCategory).mockReturnValue(undefined as never);
 
     await request(app).delete('/api/categories/1?workspaceId=3');
 
@@ -306,7 +308,7 @@ describe('DELETE /api/categories/:id', () => {
 
 describe('POST /api/categories/:id/patterns/quick', () => {
   it('returns 201 with patternId and appliedCount', async () => {
-    vi.mocked(createQuickPattern).mockReturnValue(10 as any);
+    vi.mocked(createQuickPattern).mockReturnValue(10);
 
     const res = await request(app)
       .post('/api/categories/1/patterns/quick')
@@ -325,7 +327,7 @@ describe('POST /api/categories/:id/patterns/quick', () => {
   });
 
   it('defaults appliedCount to 0 when transactionIndices is omitted', async () => {
-    vi.mocked(createQuickPattern).mockReturnValue(10 as any);
+    vi.mocked(createQuickPattern).mockReturnValue(10);
 
     const res = await request(app)
       .post('/api/categories/1/patterns/quick')
@@ -335,7 +337,7 @@ describe('POST /api/categories/:id/patterns/quick', () => {
   });
 
   it('passes categoryId, workspaceId, bankId, pattern to service', async () => {
-    vi.mocked(createQuickPattern).mockReturnValue(1 as any);
+    vi.mocked(createQuickPattern).mockReturnValue(1);
 
     await request(app)
       .post('/api/categories/7/patterns/quick')
@@ -345,7 +347,7 @@ describe('POST /api/categories/:id/patterns/quick', () => {
   });
 
   it('checks workspace membership', async () => {
-    vi.mocked(createQuickPattern).mockReturnValue(1 as any);
+    vi.mocked(createQuickPattern).mockReturnValue(1);
 
     await request(app)
       .post('/api/categories/1/patterns/quick')
@@ -360,7 +362,7 @@ describe('POST /api/categories/:id/patterns', () => {
     vi.mocked(createPattern).mockReturnValue({
       patternId: 5,
       recategorized: 3,
-    } as any);
+    });
 
     const res = await request(app)
       .post('/api/categories/1/patterns')
@@ -389,7 +391,7 @@ describe('POST /api/categories/:id/patterns', () => {
     vi.mocked(createPattern).mockReturnValue({
       patternId: 1,
       recategorized: 0,
-    } as any);
+    });
 
     const res = await request(app)
       .post('/api/categories/1/patterns')
@@ -413,7 +415,7 @@ describe('POST /api/categories/:id/patterns', () => {
   });
 
   it('checks workspace membership', async () => {
-    vi.mocked(createPattern).mockReturnValue({ patternId: 1, recategorized: 0 } as any);
+    vi.mocked(createPattern).mockReturnValue({ patternId: 1, recategorized: 0 });
 
     await request(app)
       .post('/api/categories/1/patterns')
@@ -425,7 +427,7 @@ describe('POST /api/categories/:id/patterns', () => {
 
 describe('DELETE /api/categories/:id/patterns/:patternId', () => {
   it('returns 200 on success', async () => {
-    vi.mocked(deletePattern).mockReturnValue(undefined as any);
+    vi.mocked(deletePattern).mockReturnValue(undefined as never);
 
     const res = await request(app).delete(
       '/api/categories/1/patterns/2?workspaceId=1',
@@ -436,7 +438,7 @@ describe('DELETE /api/categories/:id/patterns/:patternId', () => {
   });
 
   it('passes categoryId, patternId, and workspaceId to service', async () => {
-    vi.mocked(deletePattern).mockReturnValue(undefined as any);
+    vi.mocked(deletePattern).mockReturnValue(undefined as never);
 
     await request(app).delete('/api/categories/5/patterns/10?workspaceId=3');
 
@@ -450,7 +452,7 @@ describe('DELETE /api/categories/:id/patterns/:patternId', () => {
   });
 
   it('checks workspace membership', async () => {
-    vi.mocked(deletePattern).mockReturnValue(undefined as any);
+    vi.mocked(deletePattern).mockReturnValue(undefined as never);
 
     await request(app).delete('/api/categories/1/patterns/2?workspaceId=4');
 
