@@ -1,69 +1,17 @@
-import express from 'express';
-import compression from 'compression';
-import cors from 'cors';
-import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
 import path from 'path';
 import fs from 'fs';
+import express from 'express';
 import { config } from './config.js';
 import { initDatabase } from './db/database.js';
 import { seedDefaultCategories } from './db/seed.js';
-import { registerRoutes } from './routes/index.js';
-import { errorHandler } from './middleware/errorHandler.js';
-import { authRateLimiter, forgotPasswordRateLimiter, resetPasswordRateLimiter } from './middleware/rateLimiter.js';
 import { cleanExpiredSessions } from './services/authService.js';
-
-const app = express();
-
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(compression());
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, curl, Postman)
-    if (!origin) return callback(null, true);
-
-    // In production, allow same-origin requests (frontend served from same host)
-    if (config.isProduction) {
-      const selfOrigins = [
-        `http://localhost:${config.port}`,
-        `http://127.0.0.1:${config.port}`,
-        `http://${config.host}:${config.port}`,
-      ];
-      if (selfOrigins.includes(origin)) return callback(null, true);
-    }
-
-    if (config.allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-}));
-app.use(cookieParser());
-app.use(express.json({ limit: '1mb' }));
+import { createApp } from './app.js';
 
 // Initialize database
 initDatabase(config.databasePath);
 seedDefaultCategories();
 
-// Rate limiting on auth endpoints
-app.use('/api/auth/login', authRateLimiter);
-app.use('/api/auth/register', authRateLimiter);
-app.use('/api/auth/forgot-password', forgotPasswordRateLimiter);
-app.use('/api/auth/reset-password', resetPasswordRateLimiter);
-
-// API Routes
-registerRoutes(app);
-
-// Health check endpoint
-app.get('/api/health', (_req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-  });
-});
+const app = createApp();
 
 // Serve static frontend in production
 if (config.isProduction) {
@@ -97,9 +45,6 @@ if (config.isProduction) {
     console.warn('No static frontend found, API-only mode');
   }
 }
-
-// Error handling middleware
-app.use(errorHandler);
 
 // Clean expired sessions on startup and every 24 hours
 const cleaned = cleanExpiredSessions();

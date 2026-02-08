@@ -210,6 +210,28 @@ function createSchema(): void {
 
 }
 
+export function initTestDatabase(): void {
+  db = new Database(':memory:');
+  db.pragma('foreign_keys = ON');
+  createSchema();
+}
+
+export function resetDatabase(): void {
+  if (db) {
+    // Drop all tables and recreate schema
+    const tables = db.prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+    ).all() as Array<{ name: string }>;
+
+    db.pragma('foreign_keys = OFF');
+    for (const { name } of tables) {
+      db.exec(`DROP TABLE IF EXISTS "${name}"`);
+    }
+    db.pragma('foreign_keys = ON');
+    createSchema();
+  }
+}
+
 export function closeDatabase(): void {
   if (db) {
     db.close();
