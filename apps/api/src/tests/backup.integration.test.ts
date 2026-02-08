@@ -3,7 +3,6 @@ import {
   setupTestApp,
   cleanupTestApp,
   createTestUser,
-  createTestWorkspace,
   createTestLedger,
   createTestTransaction,
   addWorkspaceMember,

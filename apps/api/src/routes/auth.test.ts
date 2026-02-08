@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
 import { createTestApp, TEST_USER } from './test-helpers.js';
 import { AppError } from '../errors.js';
+import type { AuthResult } from '../services/authService.js';
+import type { User } from '@compasso/shared';
 
 vi.mock('../middleware/auth.js', () => ({
-  authMiddleware: vi.fn((_req: any, _res: any, next: any) => {
-    _req.user = TEST_USER;
-    _req.sessionId = 'test-session-id';
+  authMiddleware: vi.fn((req: Request, _res: Response, next: NextFunction) => {
+    req.user = TEST_USER;
+    req.sessionId = 'test-session-id';
     next();
   }),
 }));
@@ -44,7 +47,7 @@ beforeEach(() => {
 describe('POST /api/auth/register', () => {
   it('returns 201 with user and sessionId', async () => {
     const result = { user: { id: 1, username: 'new' }, sessionId: 'sess-1' };
-    vi.mocked(registerUser).mockReturnValue(result as any);
+    vi.mocked(registerUser).mockReturnValue(result as AuthResult);
 
     const res = await request(app)
       .post('/api/auth/register')
@@ -58,7 +61,7 @@ describe('POST /api/auth/register', () => {
     vi.mocked(registerUser).mockReturnValue({
       user: {},
       sessionId: 'cookie-sess',
-    } as any);
+    } as AuthResult);
 
     const res = await request(app)
       .post('/api/auth/register')
@@ -71,7 +74,7 @@ describe('POST /api/auth/register', () => {
   });
 
   it('passes registration data to service', async () => {
-    vi.mocked(registerUser).mockReturnValue({ user: {}, sessionId: 's' } as any);
+    vi.mocked(registerUser).mockReturnValue({ user: {}, sessionId: 's' } as AuthResult);
 
     await request(app).post('/api/auth/register').send({
       username: 'usr',
@@ -107,7 +110,7 @@ describe('POST /api/auth/register', () => {
 describe('POST /api/auth/login', () => {
   it('returns 200 with user and sessionId', async () => {
     const result = { user: { id: 1, username: 'test' }, sessionId: 'sess-2' };
-    vi.mocked(loginUser).mockReturnValue(result as any);
+    vi.mocked(loginUser).mockReturnValue(result as AuthResult);
 
     const res = await request(app)
       .post('/api/auth/login')
@@ -121,7 +124,7 @@ describe('POST /api/auth/login', () => {
     vi.mocked(loginUser).mockReturnValue({
       user: {},
       sessionId: 'login-sess',
-    } as any);
+    } as AuthResult);
 
     const res = await request(app)
       .post('/api/auth/login')
@@ -147,7 +150,7 @@ describe('POST /api/auth/login', () => {
 
 describe('POST /api/auth/logout', () => {
   it('returns 200 and calls logoutUser', async () => {
-    vi.mocked(logoutUser).mockReturnValue(undefined as any);
+    vi.mocked(logoutUser).mockReturnValue(undefined as never);
 
     const res = await request(app).post('/api/auth/logout');
 
@@ -157,7 +160,7 @@ describe('POST /api/auth/logout', () => {
   });
 
   it('clears session_id cookie', async () => {
-    vi.mocked(logoutUser).mockReturnValue(undefined as any);
+    vi.mocked(logoutUser).mockReturnValue(undefined as never);
 
     const res = await request(app).post('/api/auth/logout');
 
@@ -180,7 +183,7 @@ describe('GET /api/auth/me', () => {
 describe('PUT /api/auth/profile', () => {
   it('returns 200 with updated user', async () => {
     const updated = { ...TEST_USER, displayName: 'New Name' };
-    vi.mocked(updateProfile).mockReturnValue(updated as any);
+    vi.mocked(updateProfile).mockReturnValue(updated as User);
 
     const res = await request(app)
       .put('/api/auth/profile')
@@ -191,7 +194,7 @@ describe('PUT /api/auth/profile', () => {
   });
 
   it('passes userId, displayName, email, and locale to service', async () => {
-    vi.mocked(updateProfile).mockReturnValue({} as any);
+    vi.mocked(updateProfile).mockReturnValue({} as User);
 
     await request(app)
       .put('/api/auth/profile')
@@ -207,7 +210,7 @@ describe('PUT /api/auth/profile', () => {
 
 describe('PUT /api/auth/password', () => {
   it('returns 200 on success', async () => {
-    vi.mocked(changePassword).mockReturnValue(undefined as any);
+    vi.mocked(changePassword).mockReturnValue(undefined as never);
 
     const res = await request(app)
       .put('/api/auth/password')
@@ -218,7 +221,7 @@ describe('PUT /api/auth/password', () => {
   });
 
   it('passes userId and passwords to service', async () => {
-    vi.mocked(changePassword).mockReturnValue(undefined as any);
+    vi.mocked(changePassword).mockReturnValue(undefined as never);
 
     await request(app)
       .put('/api/auth/password')
@@ -265,7 +268,7 @@ describe('POST /api/auth/forgot-password', () => {
 
 describe('POST /api/auth/reset-password', () => {
   it('returns 200 on successful reset', async () => {
-    vi.mocked(resetPassword).mockReturnValue(undefined as any);
+    vi.mocked(resetPassword).mockReturnValue(undefined as never);
 
     const res = await request(app)
       .post('/api/auth/reset-password')

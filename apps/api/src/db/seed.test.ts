@@ -25,7 +25,7 @@ describe('seedCategoriesForWorkspace', () => {
   };
 
   beforeEach(() => {
-    vi.mocked(getDatabase).mockReturnValue(mockDb as any);
+    vi.mocked(getDatabase).mockReturnValue(mockDb as unknown as ReturnType<typeof getDatabase>);
 
     // Track category IDs for linking patterns
     let categoryIdCounter = 1;

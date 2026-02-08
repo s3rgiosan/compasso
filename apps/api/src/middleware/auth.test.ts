@@ -25,7 +25,7 @@ describe('authMiddleware', () => {
       json: vi.fn().mockReturnThis(),
     };
     next = vi.fn();
-    vi.mocked(getDatabase).mockReturnValue(mockDb as any);
+    vi.mocked(getDatabase).mockReturnValue(mockDb as unknown as ReturnType<typeof getDatabase>);
   });
 
   afterEach(() => {
