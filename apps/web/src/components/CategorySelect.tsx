@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Zap } from 'lucide-react';
+import { Zap, ChevronDown, Search, Plus, X } from 'lucide-react';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { createCategory, addCategoryPattern } from '@/services/api';
 import { COLORS } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 import type { Category, BankId } from '@compasso/shared';
 
 interface CategorySelectProps {
@@ -73,13 +74,114 @@ export function CategorySelect({
     return findMatches(allDescriptions, newCategoryPattern).length;
   }, [allDescriptions, newCategoryPattern]);
 
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedValue = e.target.value;
-    if (selectedValue === '__create__') {
-      setBankOverride(null);
-      setShowModal(true);
-    } else {
-      onChange(selectedValue ? parseInt(selectedValue) : null);
+  // Searchable combobox state
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const comboRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  const sortedCategories = useMemo(
+    () => categories
+      .filter((c) => c.name.toLowerCase() !== 'uncategorized')
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    [categories]
+  );
+
+  const filteredCategories = useMemo(
+    () => searchQuery
+      ? sortedCategories.filter((c) => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      : sortedCategories,
+    [sortedCategories, searchQuery]
+  );
+
+  const selectedLabel = useMemo(() => {
+    if (!value) return t('categories.noCategory');
+    return sortedCategories.find((c) => c.id === value)?.name ?? t('categories.noCategory');
+  }, [value, sortedCategories, t]);
+
+  const [dropUp, setDropUp] = useState(false);
+
+  const openDropdown = useCallback(() => {
+    // Measure available space below the trigger to decide direction
+    if (comboRef.current) {
+      const rect = comboRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      // Dropdown is ~280px tall (search bar + max-h-56 list ≈ 224px + padding)
+      setDropUp(spaceBelow < 300);
+    }
+    setIsOpen(true);
+    setSearchQuery('');
+    setHighlightedIndex(0);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, []);
+
+  const closeDropdown = useCallback(() => {
+    setIsOpen(false);
+    setSearchQuery('');
+  }, []);
+
+  const selectOption = useCallback((categoryId: number | null) => {
+    onChange(categoryId);
+    closeDropdown();
+  }, [onChange, closeDropdown]);
+
+  // Close on click outside
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (comboRef.current && !comboRef.current.contains(e.target as Node)) {
+        closeDropdown();
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen, closeDropdown]);
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (!isOpen || !listRef.current) return;
+    const item = listRef.current.children[highlightedIndex] as HTMLElement | undefined;
+    item?.scrollIntoView({ block: 'nearest' });
+  }, [highlightedIndex, isOpen]);
+
+  // totalItems = "no category" + filtered categories + "create new"
+  const totalItems = filteredCategories.length + 2;
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        openDropdown();
+      }
+      return;
+    }
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setHighlightedIndex((i) => Math.min(i + 1, totalItems - 1));
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setHighlightedIndex((i) => Math.max(i - 1, 0));
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (highlightedIndex === 0) {
+          selectOption(null);
+        } else if (highlightedIndex <= filteredCategories.length) {
+          selectOption(filteredCategories[highlightedIndex - 1].id);
+        } else {
+          setBankOverride(null);
+          setShowModal(true);
+          closeDropdown();
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        closeDropdown();
+        break;
     }
   };
 
@@ -162,19 +264,112 @@ export function CategorySelect({
 
   return (
     <>
-      <Select
-        value={value?.toString() || ''}
-        onChange={handleSelectChange}
-        options={[
-          { value: '', label: t('categories.noCategory') },
-          ...categories
-            .filter((c) => c.name.toLowerCase() !== 'uncategorized')
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((c) => ({ value: c.id, label: c.name })),
-          { value: '__create__', label: t('categories.createNew') },
-        ]}
-        className={className}
-      />
+      <div className={cn('relative', className)} ref={comboRef} onKeyDown={handleKeyDown}>
+        <button
+          type="button"
+          onClick={() => isOpen ? closeDropdown() : openDropdown()}
+          className={cn(
+            'flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm',
+            'ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+            'disabled:cursor-not-allowed disabled:opacity-50',
+          )}
+        >
+          <span className="truncate">{selectedLabel}</span>
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+        </button>
+
+        {isOpen && (
+          <div className={cn(
+            'absolute left-0 z-50 w-full min-w-[200px] rounded-md border border-gray-200 bg-white shadow-lg',
+            dropUp ? 'bottom-full mb-1' : 'top-full mt-1',
+          )}>
+            <div className="flex items-center border-b px-2">
+              <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setHighlightedIndex(0);
+                }}
+                placeholder={t('common.search')}
+                className="flex h-9 w-full bg-transparent px-2 py-1 text-sm outline-none placeholder:text-muted-foreground"
+              />
+              {searchQuery && (
+                <button type="button" onClick={() => { setSearchQuery(''); setHighlightedIndex(0); }} className="text-muted-foreground hover:text-foreground">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            <ul ref={listRef} className="max-h-56 overflow-y-auto py-1" role="listbox">
+              {/* No category option */}
+              <li
+                role="option"
+                aria-selected={value === null}
+                className={cn(
+                  'cursor-pointer px-3 py-1.5 text-sm',
+                  highlightedIndex === 0 ? 'bg-gray-100' : 'hover:bg-gray-50',
+                  value === null && 'font-medium',
+                )}
+                onClick={() => selectOption(null)}
+                onMouseEnter={() => setHighlightedIndex(0)}
+              >
+                {t('categories.noCategory')}
+              </li>
+
+              {/* Category options */}
+              {filteredCategories.map((cat, i) => (
+                <li
+                  key={cat.id}
+                  role="option"
+                  aria-selected={cat.id === value}
+                  className={cn(
+                    'flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm',
+                    highlightedIndex === i + 1 ? 'bg-gray-100' : 'hover:bg-gray-50',
+                    cat.id === value && 'font-medium',
+                  )}
+                  onClick={() => selectOption(cat.id)}
+                  onMouseEnter={() => setHighlightedIndex(i + 1)}
+                >
+                  {cat.color && (
+                    <span
+                      className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: cat.color }}
+                    />
+                  )}
+                  <span className="truncate">{cat.name}</span>
+                </li>
+              ))}
+
+              {filteredCategories.length === 0 && searchQuery && (
+                <li className="px-3 py-2 text-sm text-muted-foreground">
+                  {t('common.noResults')}
+                </li>
+              )}
+
+              {/* Create new option */}
+              <li
+                role="option"
+                aria-selected={false}
+                className={cn(
+                  'flex cursor-pointer items-center gap-2 border-t px-3 py-1.5 text-sm text-primary',
+                  highlightedIndex === filteredCategories.length + 1 ? 'bg-gray-100' : 'hover:bg-gray-50',
+                )}
+                onClick={() => {
+                  setBankOverride(null);
+                  setShowModal(true);
+                  closeDropdown();
+                }}
+                onMouseEnter={() => setHighlightedIndex(filteredCategories.length + 1)}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {t('categories.createNew')}
+              </li>
+            </ul>
+          </div>
+        )}
+      </div>
 
       <Modal open={showModal} onClose={handleClose} title={t('categories.createCategory')}>
         <div className="space-y-4">

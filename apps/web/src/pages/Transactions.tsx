@@ -279,7 +279,7 @@ export default function Transactions() {
                 pageSize={PAGE_SIZE}
                 onPageChange={(p) => updateParams({ page: p.toString() })}
               />
-              <div className="border rounded-lg overflow-hidden mt-4">
+              <div className="border rounded-lg mt-4">
                 <Table>
                   <TableHeader>
                     <TableRow>

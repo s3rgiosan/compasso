@@ -114,7 +114,7 @@ export function TransactionPreview({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-lg">
             <Table>
               <TableHeader>
                 <TableRow>
