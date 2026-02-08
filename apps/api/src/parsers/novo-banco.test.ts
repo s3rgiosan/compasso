@@ -49,6 +49,18 @@ describe('parseEuropeanDecimal', () => {
   it('should parse single digit decimals', () => {
     expect(parseEuropeanDecimal('5,50')).toBe(5.5);
   });
+
+  it('should parse negative amounts', () => {
+    expect(parseEuropeanDecimal('-10,91')).toBe(-10.91);
+  });
+
+  it('should parse negative amounts with space after minus', () => {
+    expect(parseEuropeanDecimal('- 10,91')).toBe(-10.91);
+  });
+
+  it('should parse negative amounts with thousand separators', () => {
+    expect(parseEuropeanDecimal('-1.234,56')).toBe(-1234.56);
+  });
 });
 
 describe('parseDate', () => {

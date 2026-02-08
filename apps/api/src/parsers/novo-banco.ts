@@ -20,7 +20,7 @@ interface TextItem {
 export function parseEuropeanDecimal(value: string): number {
   if (!value || value.trim() === '') return 0;
   // Remove thousand separators (dots) and replace decimal comma with dot
-  const normalized = value.trim().replace(/\./g, '').replace(',', '.');
+  const normalized = value.trim().replace(/^-\s+/, '-').replace(/\./g, '').replace(',', '.');
   return parseFloat(normalized);
 }
 
@@ -104,7 +104,7 @@ export async function parseNovoBancoPDF(buffer: Buffer): Promise<ParseResult> {
   let previousBalance: number | null = null;
 
   // Amount pattern (European format: 1.234,56 or 24,30)
-  const amountPattern = /[\d.]+,\d{2}/g;
+  const amountPattern = /-?\s?[\d.]+,\d{2}/g;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -183,7 +183,7 @@ export async function parseNovoBancoPDF(buffer: Buffer): Promise<ParseResult> {
     for (let j = descStartIdx; j < parts.length; j++) {
       const part = parts[j];
       // Stop when we hit an amount pattern
-      if (part.match(/^[\d.]+,\d{2}$/)) {
+      if (part.match(/^-?[\d.]+,\d{2}$/)) {
         break;
       }
       descParts.push(part);
