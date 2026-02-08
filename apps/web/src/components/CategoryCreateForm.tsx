@@ -11,6 +11,7 @@ import {
   addCategoryPattern,
   checkPatternExists,
 } from '@/services/api';
+import { ColorPicker } from '@/components/ui/ColorPicker';
 import { COLORS } from '@/lib/constants';
 import type { BankId } from '@compasso/shared';
 
@@ -114,22 +115,7 @@ export function CategoryCreateForm({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{t('categories.color')}</label>
-            <div className="flex gap-2">
-              {COLORS.map((c) => (
-                <button
-                  key={c.value}
-                  onClick={() => setColor(c.value)}
-                  className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
-                    color === c.value
-                      ? 'border-gray-900 scale-110'
-                      : 'border-transparent'
-                  }`}
-                  style={{ backgroundColor: c.value }}
-                  title={c.label}
-                  type="button"
-                />
-              ))}
-            </div>
+            <ColorPicker value={color} onChange={setColor} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

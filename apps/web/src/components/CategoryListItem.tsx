@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { CategoryPatterns } from '@/components/CategoryPatterns';
-import { COLORS } from '@/lib/constants';
+import { ColorPicker } from '@/components/ui/ColorPicker';
 import type { Category, CategoryWithPatterns } from '@compasso/shared';
 
 interface CategoryListItemProps {
@@ -156,21 +156,10 @@ export function CategoryListItem({
           {/* Color picker */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">{t('categories.color')}</label>
-            <div className="flex gap-2">
-              {COLORS.map((color) => (
-                <button
-                  key={color.value}
-                  onClick={() => onUpdateColor(category.id, color.value)}
-                  className={`w-8 h-8 rounded-full border-2 ${
-                    categoryDetails.color === color.value
-                      ? 'border-gray-900'
-                      : 'border-transparent'
-                  }`}
-                  style={{ backgroundColor: color.value }}
-                  title={color.label}
-                />
-              ))}
-            </div>
+            <ColorPicker
+              value={categoryDetails.color || '#a1a1aa'}
+              onChange={(color) => onUpdateColor(category.id, color)}
+            />
           </div>
 
           {/* Patterns */}

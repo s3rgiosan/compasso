@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { createCategory, addCategoryPattern } from '@/services/api';
+import { ColorPicker } from '@/components/ui/ColorPicker';
 import { COLORS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import type { Category, BankId } from '@compasso/shared';
@@ -228,22 +229,7 @@ export function CategorySelect({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {t('categories.color')}
             </label>
-            <div className="flex gap-2 flex-wrap">
-              {COLORS.map((color) => (
-                <button
-                  key={color.value}
-                  onClick={() => setNewCategoryColor(color.value)}
-                  className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
-                    newCategoryColor === color.value
-                      ? 'border-gray-900 scale-110'
-                      : 'border-transparent'
-                  }`}
-                  style={{ backgroundColor: color.value }}
-                  title={color.label}
-                  type="button"
-                />
-              ))}
-            </div>
+            <ColorPicker value={newCategoryColor} onChange={setNewCategoryColor} />
           </div>
 
           {showPatternInput && (

@@ -161,6 +161,7 @@
     "name": "Nome",
     "namePlaceholder": "Nome da categoria",
     "color": "Cor",
+    "customColor": "Cor personalizada",
     "icon": "Ícone",
     "patterns": "Padrões de Auto-Correspondência",
     "patternsDescription": "Adicione padrões para auto-corresponder transações de extratos bancários",

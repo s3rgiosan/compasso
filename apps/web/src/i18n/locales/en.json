@@ -161,6 +161,7 @@
     "name": "Name",
     "namePlaceholder": "Category name",
     "color": "Color",
+    "customColor": "Custom color",
     "icon": "Icon",
     "patterns": "Auto-Match Patterns",
     "patternsDescription": "Add patterns to auto-match transactions from bank statements",
