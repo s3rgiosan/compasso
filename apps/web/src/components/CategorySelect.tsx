@@ -169,6 +169,7 @@ export function CategorySelect({
           { value: '', label: t('categories.noCategory') },
           ...categories
             .filter((c) => c.name.toLowerCase() !== 'uncategorized')
+            .sort((a, b) => a.name.localeCompare(b.name))
             .map((c) => ({ value: c.id, label: c.name })),
           { value: '__create__', label: t('categories.createNew') },
         ]}
