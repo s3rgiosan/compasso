@@ -21,6 +21,36 @@ interface TransactionListResult {
   offset: number;
 }
 
+interface TransactionRow {
+  id: number;
+  ledger_id: number;
+  date: string;
+  description: string;
+  amount: number;
+  balance: number | null;
+  category_id: number | null;
+  is_income: number;
+  raw_text: string | null;
+  created_at: string;
+  recurring_pattern_id: number | null;
+  bank_id: string;
+  cat_id: number | null;
+  cat_name: string | null;
+  cat_color: string | null;
+  cat_icon: string | null;
+  cat_is_default: number | null;
+  cat_created_at: string | null;
+}
+
+interface ExportRow {
+  date: string;
+  description: string;
+  amount: number;
+  balance: number | null;
+  is_income: number;
+  category_name: string;
+}
+
 function buildTransactionFilters(filters: TransactionFilters): { where: string; params: unknown[] } {
   const conditions: string[] = ['l.workspace_id = ?'];
   const params: unknown[] = [filters.workspaceId];
@@ -53,7 +83,7 @@ function buildTransactionFilters(filters: TransactionFilters): { where: string; 
   return { where: `WHERE ${conditions.join(' AND ')}`, params };
 }
 
-function mapTransactionRow(r: any): TransactionWithCategory {
+function mapTransactionRow(r: TransactionRow): TransactionWithCategory {
   return {
     id: r.id,
     ledgerId: r.ledger_id,
@@ -110,7 +140,7 @@ export function listTransactions(filters: TransactionFilters): TransactionListRe
       LIMIT ? OFFSET ?
     `
     )
-    .all(...params, limit, offset) as any[];
+    .all(...params, limit, offset) as TransactionRow[];
 
   return {
     items: results.map(mapTransactionRow),
@@ -137,7 +167,7 @@ export function exportTransactions(
     LEFT JOIN categories c ON t.category_id = c.id
     ${where}
     ORDER BY t.date DESC, t.id DESC
-  `).all(...params) as any[];
+  `).all(...params) as ExportRow[];
 
   return results.map((r) => ({
     date: r.date,

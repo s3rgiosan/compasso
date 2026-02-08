@@ -291,7 +291,7 @@ export default function WorkspaceMembers({ workspaceId, currentRole }: Workspace
                   </div>
                   <div>
                     <div className="text-sm font-medium text-muted-foreground">
-                      {(inv as any).invitedUser?.displayName || (inv as any).invitedUser?.username || 'Invited user'}
+                      {inv.invitedUser?.displayName || inv.invitedUser?.username || 'Invited user'}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       <Trans i18nKey="invitations.invitedBy" values={{ name: inv.invitedBy.displayName || inv.invitedBy.username, role: t(`members.${inv.role}`) }} />

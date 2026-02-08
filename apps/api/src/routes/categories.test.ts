@@ -61,7 +61,7 @@ describe('GET /api/categories', () => {
   });
 
   it('defaults limit to 50 and offset to 0', async () => {
-    vi.mocked(listCategories).mockReturnValue({ items: [] } as ReturnType<typeof listCategories>);
+    vi.mocked(listCategories).mockReturnValue({ items: [] } as unknown as ReturnType<typeof listCategories>);
 
     await request(app).get('/api/categories?workspaceId=1');
 
@@ -69,7 +69,7 @@ describe('GET /api/categories', () => {
   });
 
   it('uses custom limit and offset', async () => {
-    vi.mocked(listCategories).mockReturnValue({ items: [] } as ReturnType<typeof listCategories>);
+    vi.mocked(listCategories).mockReturnValue({ items: [] } as unknown as ReturnType<typeof listCategories>);
 
     await request(app).get('/api/categories?workspaceId=1&limit=10&offset=20');
 
@@ -84,7 +84,7 @@ describe('GET /api/categories', () => {
   });
 
   it('checks workspace membership', async () => {
-    vi.mocked(listCategories).mockReturnValue({ items: [] } as ReturnType<typeof listCategories>);
+    vi.mocked(listCategories).mockReturnValue({ items: [] } as unknown as ReturnType<typeof listCategories>);
 
     await request(app).get('/api/categories?workspaceId=1');
 
@@ -95,7 +95,7 @@ describe('GET /api/categories', () => {
 describe('GET /api/categories/:id', () => {
   it('returns 200 with category', async () => {
     const category = { id: 1, name: 'Food', patterns: [] };
-    vi.mocked(getCategoryWithPatterns).mockReturnValue(category as CategoryWithPatterns);
+    vi.mocked(getCategoryWithPatterns).mockReturnValue(category as unknown as CategoryWithPatterns);
 
     const res = await request(app).get('/api/categories/1?workspaceId=1');
 

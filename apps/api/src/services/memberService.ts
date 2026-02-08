@@ -3,6 +3,28 @@ import { AppError } from '../errors.js';
 import { getMemberRole, requireWorkspaceRole, requireWorkspaceMembership } from './workspaceService.js';
 import { ErrorCode } from '@compasso/shared';
 
+interface InvitationRow {
+  id: number;
+  workspaceId: number;
+  workspaceName: string;
+  workspaceColor: string;
+  role: string;
+  status: string;
+  createdAt: string;
+  respondedAt: string | null;
+  invitedUserId: number;
+  invitedUsername: string;
+  invitedDisplayName: string | null;
+  invitedById: number;
+  invitedByUsername: string;
+  invitedByDisplayName: string | null;
+}
+
+interface InvitationRecord {
+  workspace_id: number;
+  role: string;
+}
+
 interface FormattedMember {
   id: number;
   workspaceId: number;
@@ -134,7 +156,7 @@ export function listWorkspaceInvitations(workspaceId: number, userId: number): F
        WHERE wi.workspace_id = ? AND wi.status = 'pending'
        ORDER BY wi.created_at DESC`
     )
-    .all(workspaceId) as any[];
+    .all(workspaceId) as InvitationRow[];
 
   return invitations.map((inv) => ({
     id: inv.id,
@@ -241,7 +263,7 @@ export function getMyInvitations(userId: number): FormattedInvitation[] {
        WHERE wi.invited_user_id = ? AND wi.status = 'pending'
        ORDER BY wi.created_at DESC`
     )
-    .all(userId) as any[];
+    .all(userId) as InvitationRow[];
 
   return invitations.map((inv) => ({
     id: inv.id,
@@ -270,7 +292,7 @@ export function acceptInvitation(invitationId: number, userId: number): void {
     .prepare(
       `SELECT * FROM workspace_invitations WHERE id = ? AND invited_user_id = ? AND status = 'pending'`
     )
-    .get(invitationId, userId) as any;
+    .get(invitationId, userId) as InvitationRecord | undefined;
 
   if (!invitation) {
     throw AppError.notFound(
@@ -302,7 +324,7 @@ export function declineInvitation(invitationId: number, userId: number): void {
     .prepare(
       `SELECT * FROM workspace_invitations WHERE id = ? AND invited_user_id = ? AND status = 'pending'`
     )
-    .get(invitationId, userId) as any;
+    .get(invitationId, userId) as InvitationRecord | undefined;
 
   if (!invitation) {
     throw AppError.notFound(

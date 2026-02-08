@@ -68,6 +68,11 @@ export interface WorkspaceInvitation {
     username: string;
     displayName: string | null;
   };
+  invitedUser?: {
+    id: number;
+    username: string;
+    displayName: string | null;
+  };
   role: WorkspaceRole;
   status: InvitationStatus;
   createdAt: string;
