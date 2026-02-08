@@ -58,7 +58,10 @@ export default function Transactions() {
   // Derive filter state from URL search params
   const selectedYear = searchParams.get('year') ? parseInt(searchParams.get('year')!) : undefined;
   const selectedMonth = searchParams.get('month') ? parseInt(searchParams.get('month')!) : undefined;
-  const selectedCategory = searchParams.get('category') ? parseInt(searchParams.get('category')!) : undefined;
+  const selectedCategoryRaw = searchParams.get('category');
+  const selectedCategory: number | 'none' | undefined = selectedCategoryRaw === 'none'
+    ? 'none'
+    : selectedCategoryRaw ? parseInt(selectedCategoryRaw) : undefined;
   const selectedType = (searchParams.get('type') || 'all') as 'all' | 'income' | 'expense';
   const search = searchParams.get('search') || '';
   const page = searchParams.get('page') ? parseInt(searchParams.get('page')!) : 0;
@@ -231,7 +234,11 @@ export default function Transactions() {
               }}
               options={[
                 { value: '', label: t('transactions.allCategories') },
-                ...[...categories].sort((a, b) => a.name.localeCompare(b.name)).map((c) => ({ value: c.id, label: c.name })),
+                { value: 'none', label: t('categories.noCategory') },
+                ...[...categories]
+                  .filter((c) => c.name.toLowerCase() !== 'uncategorized')
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((c) => ({ value: c.id, label: c.name })),
               ]}
             />
             <Select

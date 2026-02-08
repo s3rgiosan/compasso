@@ -10,7 +10,7 @@ export async function getTransactions(
   filters?: {
     year?: number;
     month?: number;
-    categoryId?: number;
+    categoryId?: number | 'none';
     isIncome?: boolean;
     search?: string;
     limit?: number;
@@ -60,7 +60,7 @@ export async function confirmTransactions(
 
 export async function exportTransactionsCsv(
   workspaceId: number,
-  filters?: { year?: number; month?: number; categoryId?: number; isIncome?: boolean; search?: string }
+  filters?: { year?: number; month?: number; categoryId?: number | 'none'; isIncome?: boolean; search?: string }
 ): Promise<void> {
   const params = new URLSearchParams();
   params.set('workspaceId', workspaceId.toString());

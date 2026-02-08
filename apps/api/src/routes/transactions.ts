@@ -28,7 +28,7 @@ router.get('/', asyncHandler((req, res) => {
     workspaceId,
     year: optionalQueryInt(req, 'year'),
     month: optionalQueryInt(req, 'month'),
-    categoryId: optionalQueryInt(req, 'categoryId'),
+    categoryId: req.query.categoryId === 'none' ? 'none' : optionalQueryInt(req, 'categoryId'),
     isIncome: req.query.isIncome !== undefined
       ? req.query.isIncome === 'true'
       : undefined,
@@ -58,7 +58,7 @@ router.get('/export', asyncHandler((req, res) => {
     workspaceId,
     year: optionalQueryInt(req, 'year'),
     month: optionalQueryInt(req, 'month'),
-    categoryId: optionalQueryInt(req, 'categoryId'),
+    categoryId: req.query.categoryId === 'none' ? 'none' : optionalQueryInt(req, 'categoryId'),
     isIncome: req.query.isIncome !== undefined ? req.query.isIncome === 'true' : undefined,
     search: optionalQueryString(req, 'search'),
   });

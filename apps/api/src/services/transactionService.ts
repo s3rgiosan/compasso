@@ -7,7 +7,7 @@ interface TransactionFilters {
   workspaceId: number;
   year?: number;
   month?: number;
-  categoryId?: number;
+  categoryId?: number | 'none';
   isIncome?: boolean;
   search?: string;
   limit?: number;
@@ -65,7 +65,9 @@ function buildTransactionFilters(filters: TransactionFilters): { where: string; 
     params.push(range.start, range.end);
   }
 
-  if (filters.categoryId !== undefined) {
+  if (filters.categoryId === 'none') {
+    conditions.push('t.category_id IS NULL');
+  } else if (filters.categoryId !== undefined) {
     conditions.push('t.category_id = ?');
     params.push(filters.categoryId);
   }
