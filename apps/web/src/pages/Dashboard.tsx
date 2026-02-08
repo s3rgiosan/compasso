@@ -291,11 +291,16 @@ export default function Dashboard() {
             <CardTitle>{t('dashboard.expensesByCategory')}</CardTitle>
           </CardHeader>
           <CardContent>
-            {categoryBreakdown.length > 0 ? (
+            {categoryBreakdown.length > 0 ? (() => {
+              const translatedBreakdown = categoryBreakdown.map((entry) => ({
+                ...entry,
+                categoryName: entry.categoryName === 'Uncategorized' ? t('categories.uncategorized') : entry.categoryName,
+              }));
+              return (
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={categoryBreakdown}
+                    data={translatedBreakdown}
                     dataKey="total"
                     nameKey="categoryName"
                     cx="50%"
@@ -306,7 +311,7 @@ export default function Dashboard() {
                     }
                     labelLine={false}
                   >
-                    {categoryBreakdown.map((entry, index) => (
+                    {translatedBreakdown.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={entry.categoryColor || `hsl(${index * 30}, 70%, 50%)`}
@@ -316,7 +321,8 @@ export default function Dashboard() {
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
                 </PieChart>
               </ResponsiveContainer>
-            ) : (
+              );
+            })() : (
               <div className="flex items-center justify-center h-[300px] text-muted-foreground">
                 {t('dashboard.noExpenseData')}
               </div>

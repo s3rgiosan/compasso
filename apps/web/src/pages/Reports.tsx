@@ -92,6 +92,8 @@ export default function Reports() {
     loadData();
   }, [currentWorkspace, selectedYear]);
 
+  const translateCat = (name: string) => name === 'Uncategorized' ? t('categories.uncategorized') : name;
+
   if (workspaceLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -274,7 +276,7 @@ export default function Reports() {
                                 className="w-3 h-3 rounded-full"
                                 style={{ backgroundColor: cat.categoryColor || '#a1a1aa' }}
                               />
-                              {cat.categoryName}
+                              {translateCat(cat.categoryName)}
                             </div>
                           </TableCell>
                           <TableCell className="text-right font-medium">
@@ -328,7 +330,7 @@ export default function Reports() {
                             data={trend.monthlyData}
                             type="monotone"
                             dataKey="total"
-                            name={trend.categoryName}
+                            name={translateCat(trend.categoryName)}
                             stroke={color}
                             strokeWidth={2}
                             dot={false}
@@ -350,7 +352,7 @@ export default function Reports() {
                             className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: trend.categoryColor || '#a1a1aa' }}
                           />
-                          <span className="font-medium text-sm">{trend.categoryName}</span>
+                          <span className="font-medium text-sm">{translateCat(trend.categoryName)}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-muted-foreground">
