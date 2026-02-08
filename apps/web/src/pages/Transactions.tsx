@@ -27,6 +27,7 @@ import {
   deleteTransaction,
   exportTransactionsCsv,
 } from '@/services/api';
+import { Pagination } from '@/components/ui/Pagination';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import type { TransactionWithCategory, Category, PaginatedResponse } from '@compasso/shared';
@@ -258,7 +259,14 @@ export default function Transactions() {
             </div>
           ) : (
             <>
-              <div className="border rounded-lg overflow-hidden">
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                total={data?.total ?? 0}
+                pageSize={PAGE_SIZE}
+                onPageChange={setPage}
+              />
+              <div className="border rounded-lg overflow-hidden mt-4">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -338,33 +346,15 @@ export default function Transactions() {
                 </Table>
               </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {page * PAGE_SIZE + 1} to{' '}
-                    {Math.min((page + 1) * PAGE_SIZE, data?.total ?? 0)} of {data?.total ?? 0}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => Math.max(0, p - 1))}
-                      disabled={page === 0}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage((p) => p + 1)}
-                      disabled={page >= totalPages - 1}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <div className="mt-4">
+                <Pagination
+                  page={page}
+                  totalPages={totalPages}
+                  total={data?.total ?? 0}
+                  pageSize={PAGE_SIZE}
+                  onPageChange={setPage}
+                />
+              </div>
             </>
           )}
         </CardContent>

@@ -18,7 +18,8 @@
     "default": "Padrão",
     "noDataAvailable": "Sem dados disponíveis",
     "showing": "A mostrar {{from}} a {{to}} de {{total}}",
-    "selectWorkspace": "Selecione um espaço de trabalho"
+    "selectWorkspace": "Selecione um espaço de trabalho",
+    "page": "Página {{page}}"
   },
   "auth": {
     "signIn": "Entrar",
@@ -171,7 +172,8 @@
     "pattern": "Padrão",
     "patternPlaceholder": "Introduza padrão de texto",
     "priority": "Prioridade",
-    "removePattern": "Remover padrão"
+    "removePattern": "Remover padrão",
+    "uncategorized": "Sem categoria"
   },
   "upload": {
     "title": "Carregar Extrato",

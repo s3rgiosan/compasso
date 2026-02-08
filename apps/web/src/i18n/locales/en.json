@@ -18,7 +18,8 @@
     "default": "Default",
     "noDataAvailable": "No data available",
     "showing": "Showing {{from}} to {{to}} of {{total}}",
-    "selectWorkspace": "Please select a workspace"
+    "selectWorkspace": "Please select a workspace",
+    "page": "Page {{page}}"
   },
   "auth": {
     "signIn": "Sign In",
@@ -171,7 +172,8 @@
     "pattern": "Pattern",
     "patternPlaceholder": "Enter text pattern",
     "priority": "Priority",
-    "removePattern": "Remove pattern"
+    "removePattern": "Remove pattern",
+    "uncategorized": "Uncategorized"
   },
   "upload": {
     "title": "Upload Statement",
