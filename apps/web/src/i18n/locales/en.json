@@ -19,7 +19,9 @@
     "noDataAvailable": "No data available",
     "showing": "Showing {{from}} to {{to}} of {{total}}",
     "selectWorkspace": "Please select a workspace",
-    "page": "Page {{page}}"
+    "page": "Page {{page}}",
+    "search": "Search...",
+    "noResults": "No results found"
   },
   "auth": {
     "signIn": "Sign In",
