@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
 import { createTestApp, TEST_USER } from './test-helpers.js';
+import type { WorkspaceBackup, ImportStats } from '../services/backupService.js';
 
 vi.mock('../middleware/auth.js', () => ({
-  authMiddleware: vi.fn((_req: any, _res: any, next: any) => {
-    _req.user = TEST_USER;
-    _req.sessionId = 'test-session-id';
+  authMiddleware: vi.fn((req: Request, _res: Response, next: NextFunction) => {
+    req.user = TEST_USER;
+    req.sessionId = 'test-session-id';
     next();
   }),
 }));
@@ -38,8 +40,8 @@ describe('GET /api/backup/export', () => {
       categories: [],
       ledgers: [],
     };
-    vi.mocked(exportWorkspaceData).mockReturnValue(backup as any);
-    vi.mocked(requireWorkspaceMembership).mockReturnValue(undefined as any);
+    vi.mocked(exportWorkspaceData).mockReturnValue(backup as WorkspaceBackup);
+    vi.mocked(requireWorkspaceMembership).mockReturnValue('owner');
 
     const res = await request(app).get('/api/backup/export?workspaceId=1');
 
@@ -59,8 +61,8 @@ describe('GET /api/backup/export', () => {
   it('calls requireWorkspaceMembership with workspaceId and userId', async () => {
     vi.mocked(exportWorkspaceData).mockReturnValue({
       workspace: { name: 'W' },
-    } as any);
-    vi.mocked(requireWorkspaceMembership).mockReturnValue(undefined as any);
+    } as WorkspaceBackup);
+    vi.mocked(requireWorkspaceMembership).mockReturnValue('owner');
 
     await request(app).get('/api/backup/export?workspaceId=5');
 
@@ -70,8 +72,8 @@ describe('GET /api/backup/export', () => {
   it('passes workspaceId to exportWorkspaceData', async () => {
     vi.mocked(exportWorkspaceData).mockReturnValue({
       workspace: { name: 'W' },
-    } as any);
-    vi.mocked(requireWorkspaceMembership).mockReturnValue(undefined as any);
+    } as WorkspaceBackup);
+    vi.mocked(requireWorkspaceMembership).mockReturnValue('owner');
 
     await request(app).get('/api/backup/export?workspaceId=3');
 
@@ -91,8 +93,8 @@ describe('POST /api/backup/import', () => {
 
   it('returns 200 with import stats', async () => {
     const stats = { categoriesImported: 5, ledgersImported: 2 };
-    vi.mocked(requireWorkspaceRole).mockReturnValue(undefined as any);
-    vi.mocked(importWorkspaceData).mockReturnValue(stats as any);
+    vi.mocked(requireWorkspaceRole).mockReturnValue('owner');
+    vi.mocked(importWorkspaceData).mockReturnValue(stats as ImportStats);
 
     const res = await request(app)
       .post('/api/backup/import?workspaceId=1')
@@ -114,7 +116,7 @@ describe('POST /api/backup/import', () => {
   });
 
   it('returns 400 on invalid JSON', async () => {
-    vi.mocked(requireWorkspaceRole).mockReturnValue(undefined as any);
+    vi.mocked(requireWorkspaceRole).mockReturnValue('owner');
 
     const res = await request(app)
       .post('/api/backup/import?workspaceId=1')
@@ -128,7 +130,7 @@ describe('POST /api/backup/import', () => {
   });
 
   it('returns 400 on bad version', async () => {
-    vi.mocked(requireWorkspaceRole).mockReturnValue(undefined as any);
+    vi.mocked(requireWorkspaceRole).mockReturnValue('owner');
     const bad = { ...validBackup, version: 99 };
 
     const res = await request(app)
@@ -143,7 +145,7 @@ describe('POST /api/backup/import', () => {
   });
 
   it('returns 400 on missing structure', async () => {
-    vi.mocked(requireWorkspaceRole).mockReturnValue(undefined as any);
+    vi.mocked(requireWorkspaceRole).mockReturnValue('owner');
     const bad = { version: 1 };
 
     const res = await request(app)
@@ -158,8 +160,8 @@ describe('POST /api/backup/import', () => {
   });
 
   it('calls requireWorkspaceRole with owner/editor', async () => {
-    vi.mocked(requireWorkspaceRole).mockReturnValue(undefined as any);
-    vi.mocked(importWorkspaceData).mockReturnValue({} as any);
+    vi.mocked(requireWorkspaceRole).mockReturnValue('owner');
+    vi.mocked(importWorkspaceData).mockReturnValue({} as ImportStats);
 
     await request(app)
       .post('/api/backup/import?workspaceId=5')
