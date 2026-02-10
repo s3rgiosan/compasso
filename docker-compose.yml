@@ -10,6 +10,7 @@ services:
       - NODE_ENV=production
       - RESEND_API_KEY=${RESEND_API_KEY:-}
       - EMAIL_FROM=${EMAIL_FROM:-}
+      - DEMO_MODE=${DEMO_MODE:-}
     volumes:
       - compasso-data:/data
     restart: unless-stopped

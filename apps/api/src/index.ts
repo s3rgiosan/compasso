@@ -5,11 +5,16 @@ import { config } from './config.js';
 import { initDatabase } from './db/database.js';
 import { seedDefaultCategories } from './db/seed.js';
 import { cleanExpiredSessions } from './services/authService.js';
+import { seedDemoData } from './db/demo-seed.js';
 import { createApp } from './app.js';
 
 // Initialize database
 initDatabase(config.databasePath);
 seedDefaultCategories();
+
+if (config.demoMode) {
+  seedDemoData();
+}
 
 const app = createApp();
 

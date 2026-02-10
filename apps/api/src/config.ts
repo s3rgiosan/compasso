@@ -13,6 +13,7 @@ interface AppConfig {
   isProduction: boolean;
   allowedOrigins: string[];
   resend: ResendConfig | null;
+  demoMode: boolean;
 }
 
 function loadConfig(): AppConfig {
@@ -34,7 +35,9 @@ function loadConfig(): AppConfig {
     ? { apiKey: resendApiKey, from: process.env.EMAIL_FROM || 'noreply@compasso.app' }
     : null;
 
-  return { port, host, databasePath, nodeEnv, isProduction: nodeEnv === 'production', allowedOrigins, resend };
+  const demoMode = process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1';
+
+  return { port, host, databasePath, nodeEnv, isProduction: nodeEnv === 'production', allowedOrigins, resend, demoMode };
 }
 
 export const config = loadConfig();
