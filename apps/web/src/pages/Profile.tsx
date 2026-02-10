@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/context/AuthContext';
+import { PasswordStrengthMeter } from '@/components/ui/PasswordStrengthMeter';
 import { updateProfile, changePassword } from '@/services/api';
 
 export default function Profile() {
@@ -231,7 +232,7 @@ export default function Profile() {
                   required
                   minLength={8}
                 />
-                <p className="text-xs text-muted-foreground mt-1">{t('profile.passwordHint')}</p>
+                <PasswordStrengthMeter password={newPassword} />
               </div>
 
               <div>

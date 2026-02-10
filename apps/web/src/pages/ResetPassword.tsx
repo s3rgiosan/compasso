@@ -5,6 +5,7 @@ import { KeyRound, AlertCircle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PasswordStrengthMeter } from '@/components/ui/PasswordStrengthMeter';
 import { resetPassword } from '@/services/api';
 
 export default function ResetPassword() {
@@ -123,9 +124,7 @@ export default function ResetPassword() {
                     autoFocus
                     minLength={8}
                   />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {t('auth.passwordHint')}
-                  </p>
+                  <PasswordStrengthMeter password={newPassword} />
                 </div>
 
                 <div>

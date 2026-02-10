@@ -5,6 +5,7 @@ import { UserPlus, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PasswordStrengthMeter } from '@/components/ui/PasswordStrengthMeter';
 import { useAuth } from '@/context/AuthContext';
 
 export default function Register() {
@@ -154,9 +155,7 @@ export default function Register() {
                   autoComplete="new-password"
                   minLength={8}
                 />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t('auth.passwordHint')}
-                </p>
+                <PasswordStrengthMeter password={password} />
               </div>
 
               <div>
