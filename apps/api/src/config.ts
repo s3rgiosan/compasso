@@ -5,6 +5,15 @@ interface ResendConfig {
   from: string;
 }
 
+interface SmtpConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  pass: string;
+  from: string;
+}
+
 interface AppConfig {
   port: number;
   host: string;
@@ -12,6 +21,7 @@ interface AppConfig {
   nodeEnv: string;
   isProduction: boolean;
   allowedOrigins: string[];
+  smtp: SmtpConfig | null;
   resend: ResendConfig | null;
   demoMode: boolean;
 }
@@ -30,6 +40,18 @@ function loadConfig(): AppConfig {
     throw new Error(`Invalid PORT: ${process.env.PORT}`);
   }
 
+  const smtpHost = process.env.SMTP_HOST;
+  const smtp: SmtpConfig | null = smtpHost
+    ? {
+        host: smtpHost,
+        port: Number(process.env.SMTP_PORT) || 587,
+        secure: process.env.SMTP_SECURE === 'true',
+        user: process.env.SMTP_USER || '',
+        pass: process.env.SMTP_PASS || '',
+        from: process.env.SMTP_FROM || 'noreply@compasso.app',
+      }
+    : null;
+
   const resendApiKey = process.env.RESEND_API_KEY;
   const resend: ResendConfig | null = resendApiKey
     ? { apiKey: resendApiKey, from: process.env.EMAIL_FROM || 'noreply@compasso.app' }
@@ -37,7 +59,7 @@ function loadConfig(): AppConfig {
 
   const demoMode = process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1';
 
-  return { port, host, databasePath, nodeEnv, isProduction: nodeEnv === 'production', allowedOrigins, resend, demoMode };
+  return { port, host, databasePath, nodeEnv, isProduction: nodeEnv === 'production', allowedOrigins, smtp, resend, demoMode };
 }
 
 export const config = loadConfig();

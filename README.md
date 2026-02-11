@@ -84,13 +84,40 @@ ALLOWED_ORIGINS=http://localhost:5180,http://127.0.0.1:5180
 DATABASE_PATH=./data
 
 # Email — optional, used for password reset emails (see below)
+# Option 1: SMTP (any provider)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=user@gmail.com
+SMTP_PASS=app-password
+SMTP_FROM=noreply@yourdomain.com
+# Option 2: Resend
 RESEND_API_KEY=re_xxxxxxxxxxxx
 EMAIL_FROM=noreply@compasso.app
 ```
 
 ### Email Service (Optional)
 
-Password reset emails are sent via [Resend](https://resend.com). Without configuration the app runs normally but password reset will not send emails.
+Password reset emails require an email transport. Without configuration the app runs normally but password reset will not send emails. Configure one of the following options:
+
+#### Option 1: SMTP (any provider)
+
+Works with Gmail, Mailgun, SES, self-hosted, or any SMTP server.
+
+```bash
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587          # defaults to 587
+SMTP_SECURE=false      # true for port 465
+SMTP_USER=user@gmail.com
+SMTP_PASS=app-password
+SMTP_FROM=noreply@yourdomain.com
+```
+
+`SMTP_FROM` defaults to `noreply@compasso.app` if not set.
+
+#### Option 2: Resend
+
+Uses the [Resend](https://resend.com) REST API.
 
 1. Create an account at [resend.com](https://resend.com)
 2. Generate an API key from the dashboard
@@ -103,6 +130,8 @@ EMAIL_FROM=noreply@yourdomain.com
 ```
 
 `EMAIL_FROM` defaults to `noreply@compasso.app` if not set.
+
+If both are configured, SMTP takes priority.
 
 ### Production Build
 
