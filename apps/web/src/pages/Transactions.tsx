@@ -128,11 +128,27 @@ export default function Transactions() {
 
   const handleCategoryChange = async (transactionId: number, categoryId: number | null) => {
     if (!currentWorkspace) return;
+
+    // Optimistically update local state to avoid full reload and scroll-to-top
+    const category = categoryId !== null ? (categories.find((c) => c.id === categoryId) ?? null) : null;
+    setData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        items: prev.items.map((tx) =>
+          tx.id === transactionId
+            ? { ...tx, categoryId, category }
+            : tx
+        ),
+      };
+    });
+
     try {
       await updateTransaction(transactionId, currentWorkspace.id, { categoryId });
-      loadTransactions();
     } catch (err) {
       console.error('Failed to update transaction:', err);
+      // Revert on failure
+      loadTransactions();
     }
   };
 

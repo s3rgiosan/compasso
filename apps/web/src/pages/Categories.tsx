@@ -115,14 +115,26 @@ export default function Categories() {
 
   const handleUpdateColor = async (categoryId: number, color: string) => {
     if (!currentWorkspace) return;
+
+    // Optimistic update to avoid full reload and scroll reset
+    setCategoriesData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        items: prev.items.map((c) =>
+          c.id === categoryId ? { ...c, color } : c
+        ),
+      };
+    });
+    if (categoryDetails?.id === categoryId) {
+      setCategoryDetails({ ...categoryDetails, color });
+    }
+
     try {
       await updateCategory(categoryId, currentWorkspace.id, { color });
-      await loadCategories();
-      if (categoryDetails?.id === categoryId) {
-        setCategoryDetails({ ...categoryDetails, color });
-      }
     } catch (err) {
       console.error('Failed to update category:', err);
+      loadCategories();
     }
   };
 
