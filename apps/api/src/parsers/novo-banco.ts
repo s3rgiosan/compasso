@@ -133,7 +133,8 @@ export async function parseNovoBancoPDF(buffer: Buffer): Promise<ParseResult> {
 
     if (!inTransactionSection) continue;
 
-    // Skip PDF column headers and single-word layout artifacts from the bank's PDF format.
+    // Skip PDF column headers, single-word layout artifacts, page footers/headers
+    // from the bank's PDF format.
     if (
       normalizedLine.includes('Data Descritivo') ||
       normalizedLine.includes('Débito Crédito') ||
@@ -147,7 +148,16 @@ export async function parseNovoBancoPDF(buffer: Buffer): Promise<ParseResult> {
       normalizedLine === 'DN' ||
       normalizedLine === 'Computador' ||
       normalizedLine === 'por' ||
-      normalizedLine === 'Processado'
+      normalizedLine === 'Processado' ||
+      normalizedLine === 'EXTINT05' ||
+      normalizedLine.includes('Extrato Integrado') ||
+      normalizedLine.includes('Novo Banco, S.A.') ||
+      normalizedLine.includes('Taguspark,') ||
+      normalizedLine.includes('Atendimento personalizado') ||
+      normalizedLine.includes('pessoa coletiva') ||
+      normalizedLine.includes('capital social de') ||
+      normalizedLine.includes('fins de semana e feriados') ||
+      (normalizedLine.startsWith('CONTA') && normalizedLine.includes('DO nº'))
     ) {
       continue;
     }
@@ -161,19 +171,30 @@ export async function parseNovoBancoPDF(buffer: Buffer): Promise<ParseResult> {
       continue;
     }
 
+    // Strip sidebar artifact "-" that sometimes lands on the same Y as a transaction
+    const cleanedLine = line.replace(/^-\s+(?=\d{2}\.\d{2}\.\d{2}\s)/, '');
+
     // Check if this line starts with a date (DD.MM.YY format)
-    const dateMatch = line.match(/^(\d{2}\.\d{2}\.\d{2})\s+/);
-    if (!dateMatch) continue;
+    const dateMatch = cleanedLine.match(/^(\d{2}\.\d{2}\.\d{2})\s+/);
+    if (!dateMatch) {
+      // Continuation line: append to previous transaction's description
+      if (transactions.length > 0) {
+        const prev = transactions[transactions.length - 1];
+        prev.description = `${prev.description} ${line.replace(/\s+/g, ' ')}`;
+        prev.rawText = `${prev.rawText}\n${line}`;
+      }
+      continue;
+    }
 
     // Parse the transaction line
-    const parts = line.split(/\s+/);
+    const parts = cleanedLine.split(/\s+/);
     if (parts.length < 4) continue;
 
     const date = parseDate(parts[0]);
     const valueDate = parts[1]?.match(/^\d{2}\.\d{2}\.\d{2}$/) ? parseDate(parts[1]) : date;
 
     // Find all amounts in the line
-    const amounts = line.match(amountPattern) || [];
+    const amounts = cleanedLine.match(amountPattern) || [];
     if (amounts.length < 2) continue;
 
     // Description is between the value date and the first amount
@@ -238,7 +259,7 @@ export async function parseNovoBancoPDF(buffer: Buffer): Promise<ParseResult> {
       amount: Math.abs(amount),
       balance,
       isIncome,
-      rawText: line,
+      rawText: cleanedLine,
       suggestedCategoryId: null,
       suggestedCategoryName: null,
     });
