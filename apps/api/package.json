@@ -22,7 +22,7 @@
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
     "multer": "^1.4.5-lts.1",
-    "nodemailer": "^6.10.1",
+    "nodemailer": "^8.0.1",
     "pdfjs-dist": "^5.4.530",
     "zod": "^4.3.6"
   },
