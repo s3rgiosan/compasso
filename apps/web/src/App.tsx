@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { WorkspaceProvider } from './context/WorkspaceContext';
+import { WorkspaceProvider, useWorkspace } from './context/WorkspaceContext';
 import { ToastProvider } from './components/ui/Toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import Layout from './components/Layout';
@@ -39,6 +39,24 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function RequireWorkspace({ children }: { children: React.ReactNode }) {
+  const { workspaces, loading } = useWorkspace();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (workspaces.length === 0) {
+    return <Navigate to="/workspaces" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -62,12 +80,12 @@ function App() {
                         <ErrorBoundary>
                           <Suspense fallback={<div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
                             <Routes>
-                              <Route path="/" element={<Dashboard />} />
-                              <Route path="/upload" element={<Upload />} />
-                              <Route path="/transactions" element={<Transactions />} />
-                              <Route path="/categories" element={<Categories />} />
-                              <Route path="/reports" element={<Reports />} />
-                              <Route path="/recurring" element={<Recurring />} />
+                              <Route path="/" element={<RequireWorkspace><Dashboard /></RequireWorkspace>} />
+                              <Route path="/upload" element={<RequireWorkspace><Upload /></RequireWorkspace>} />
+                              <Route path="/transactions" element={<RequireWorkspace><Transactions /></RequireWorkspace>} />
+                              <Route path="/categories" element={<RequireWorkspace><Categories /></RequireWorkspace>} />
+                              <Route path="/reports" element={<RequireWorkspace><Reports /></RequireWorkspace>} />
+                              <Route path="/recurring" element={<RequireWorkspace><Recurring /></RequireWorkspace>} />
                               <Route path="/workspaces" element={<WorkspaceSettings />} />
                               <Route path="/profile" element={<Profile />} />
                               <Route path="/invitations" element={<Invitations />} />

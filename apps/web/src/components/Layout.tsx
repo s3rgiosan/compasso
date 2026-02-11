@@ -6,6 +6,7 @@ import WorkspaceSelector from './WorkspaceSelector';
 import { Button } from './ui/Button';
 import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator } from './ui/DropdownMenu';
 import { useAuth } from '@/context/AuthContext';
+import { useWorkspace } from '@/context/WorkspaceContext';
 import { getMyInvitations } from '@/services/api';
 
 interface LayoutProps {
@@ -17,6 +18,9 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user, loading, logout } = useAuth();
+  const { workspaces, loading: workspaceLoading } = useWorkspace();
+
+  const hasWorkspaces = !workspaceLoading && workspaces.length > 0;
 
   const primaryNavItems = [
     { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
@@ -73,57 +77,61 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Navigation */}
             <nav className="flex items-center gap-1">
-              {primaryNavItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                const Icon = item.icon;
+              {hasWorkspaces && (
+                <>
+                  {primaryNavItems.map((item) => {
+                    const isActive = location.pathname === item.path;
+                    const Icon = item.icon;
 
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-primary text-white'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{item.label}</span>
-                  </Link>
-                );
-              })}
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          isActive
+                            ? 'bg-primary text-white'
+                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span className="hidden sm:inline">{item.label}</span>
+                      </Link>
+                    );
+                  })}
 
-              {/* More dropdown */}
-              <DropdownMenu
-                align="right"
-                trigger={
-                  <button
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      moreNavItems.some((item) => location.pathname === item.path)
-                        ? 'bg-primary text-white'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                    }`}
+                  {/* More dropdown */}
+                  <DropdownMenu
+                    align="right"
+                    trigger={
+                      <button
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          moreNavItems.some((item) => location.pathname === item.path)
+                            ? 'bg-primary text-white'
+                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="hidden sm:inline">{t('nav.more')}</span>
+                      </button>
+                    }
                   >
-                    <MoreHorizontal className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t('nav.more')}</span>
-                  </button>
-                }
-              >
-                {moreNavItems.map((item) => {
-                  const isActive = location.pathname === item.path;
-                  const Icon = item.icon;
-                  return (
-                    <DropdownMenuItem
-                      key={item.path}
-                      onClick={() => navigate(item.path)}
-                      className={isActive ? 'bg-gray-100 font-medium' : ''}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {item.label}
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenu>
+                    {moreNavItems.map((item) => {
+                      const isActive = location.pathname === item.path;
+                      const Icon = item.icon;
+                      return (
+                        <DropdownMenuItem
+                          key={item.path}
+                          onClick={() => navigate(item.path)}
+                          className={isActive ? 'bg-gray-100 font-medium' : ''}
+                        >
+                          <Icon className="h-4 w-4" />
+                          {item.label}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenu>
+                </>
+              )}
 
               {/* Invitations + User menu */}
               {!loading && (

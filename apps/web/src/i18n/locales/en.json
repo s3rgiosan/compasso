@@ -323,6 +323,7 @@
     "noNewData": "No new data to import (all duplicates skipped)",
     "imported": "Imported {{details}}",
     "duplicatesSkipped": "({{count}} duplicates skipped)",
+    "manageWorkspaces": "Manage Workspaces",
     "iconPersonal": "Personal",
     "iconWork": "Work",
     "iconCompany": "Company",

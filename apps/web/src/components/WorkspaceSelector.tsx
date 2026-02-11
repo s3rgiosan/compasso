@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, Settings, Briefcase, User, Building2, Users } from 'lucide-react';
+import { ChevronDown, Check, Settings, Plus, Briefcase, User, Building2, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import type { Workspace } from '@compasso/shared';
 
@@ -20,6 +21,7 @@ interface WorkspaceSelectorProps {
 }
 
 export default function WorkspaceSelector({ onManageClick }: WorkspaceSelectorProps) {
+  const { t } = useTranslation();
   const { workspaces, currentWorkspace, setCurrentWorkspace, loading } = useWorkspace();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -53,12 +55,24 @@ export default function WorkspaceSelector({ onManageClick }: WorkspaceSelectorPr
     setIsOpen(false);
   };
 
-  if (loading || !currentWorkspace) {
+  if (loading) {
     return (
       <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg animate-pulse">
         <div className="w-5 h-5 bg-gray-200 rounded" />
         <div className="w-20 h-4 bg-gray-200 rounded" />
       </div>
+    );
+  }
+
+  if (!currentWorkspace) {
+    return (
+      <button
+        onClick={onManageClick}
+        className="flex items-center gap-2 px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors text-sm font-medium"
+      >
+        <Plus className="w-4 h-4" />
+        {t('workspaces.createWorkspace')}
+      </button>
     );
   }
 
@@ -87,7 +101,7 @@ export default function WorkspaceSelector({ onManageClick }: WorkspaceSelectorPr
       {isOpen && (
         <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
           <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase">
-            Workspaces
+            {t('workspaces.title')}
           </div>
 
           {workspaces.map((workspace) => {
@@ -131,7 +145,7 @@ export default function WorkspaceSelector({ onManageClick }: WorkspaceSelectorPr
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100">
                   <Settings className="w-4 h-4 text-gray-500" />
                 </div>
-                <span className="text-sm">Manage Workspaces</span>
+                <span className="text-sm">{t('workspaces.manageWorkspaces')}</span>
               </button>
             )}
           </div>

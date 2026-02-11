@@ -323,6 +323,7 @@
     "noNewData": "Sem novos dados para importar (todos os duplicados ignorados)",
     "imported": "Importado {{details}}",
     "duplicatesSkipped": "({{count}} duplicados ignorados)",
+    "manageWorkspaces": "Gerir Espaços de Trabalho",
     "iconPersonal": "Pessoal",
     "iconWork": "Trabalho",
     "iconCompany": "Empresa",
