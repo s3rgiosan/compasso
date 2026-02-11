@@ -12,7 +12,7 @@ services:
       - EMAIL_FROM=${EMAIL_FROM:-}
       - DEMO_MODE=${DEMO_MODE:-}
     volumes:
-      - compasso-data:/data
+      - ./data:/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5181/api/health"]
@@ -20,6 +20,3 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
-
-volumes:
-  compasso-data:
