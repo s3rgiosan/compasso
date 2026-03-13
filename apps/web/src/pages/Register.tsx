@@ -15,7 +15,6 @@ export default function Register() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [locale, setLocale] = useState(i18n.language?.startsWith('pt') ? 'pt' : 'en');
@@ -26,13 +25,6 @@ export default function Register() {
     e.preventDefault();
     setError(null);
 
-    // Validate passwords match
-    if (password !== confirmPassword) {
-      setError(t('auth.passwordsDoNotMatch'));
-      return;
-    }
-
-    // Validate password strength
     if (password.length < 8) {
       setError(t('auth.passwordMinLength'));
       return;
@@ -158,22 +150,7 @@ export default function Register() {
                 <PasswordStrengthMeter password={password} />
               </div>
 
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('auth.confirmPasswordRequired')}
-                </label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder={t('auth.confirmPassword')}
-                  required
-                  autoComplete="new-password"
-                />
-              </div>
-
-              <Button type="submit" className="w-full" disabled={loading}>
+<Button type="submit" className="w-full" disabled={loading}>
                 {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
               </Button>
 
