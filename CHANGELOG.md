@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- CI/CD pipeline publishes Docker image to GitHub Container Registry on push to `main`
+- Docker image tagged with `latest` and commit SHA for versioning
+
 ### Changed
 
 - Remove confirm password field from registration form
+- Docker Compose uses pre-built GHCR image instead of local build
 
 ## [1.0.0] - 2026-02-11
 

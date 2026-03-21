@@ -1,6 +1,6 @@
 services:
   compasso:
-    build: .
+    image: ghcr.io/s3rgiosan/compasso:latest
     ports:
       - "${PORT:-5181}:5181"
     environment:

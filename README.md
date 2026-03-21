@@ -141,15 +141,46 @@ npm run build
 
 ### Docker
 
+The Docker image is automatically built and pushed to GitHub Container Registry on every push to `main` (after CI passes).
+
 ```bash
-# Build and run with Docker Compose
+# Run with the pre-built image
 docker compose up -d
 
-# Rebuild after code changes
-docker compose up -d --build
+# Pull the latest image (e.g., after a new release)
+docker compose pull && docker compose up -d
+```
+
+To build locally instead:
+
+```bash
+docker build -t compasso .
+docker run -d -p 5181:5181 -v ./data:/data compasso
 ```
 
 Environment variables are read from a `.env` file in the project root.
+
+#### Auto-updates with Watchtower
+
+If you run [Watchtower](https://github.com/containrrr/watchtower), it will automatically detect new image pushes and update the running container:
+
+```yaml
+services:
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=3600
+      - WATCHTOWER_CLEANUP=true
+    restart: unless-stopped
+```
+
+For private repositories, authenticate Docker with GHCR first:
+
+```bash
+echo "YOUR_GITHUB_PAT" | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+```
 
 ## Usage
 

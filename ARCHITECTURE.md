@@ -583,6 +583,15 @@ Type-safe API client with functions for all backend endpoints:
 | Prettier | Code formatting |
 | Concurrently | Run multiple dev servers |
 
+### CI/CD
+
+| Stage | Trigger | Description |
+|-------|---------|-------------|
+| CI | Push/PR to `main` | Lint, type-check, build, and test |
+| Docker | Push to `main` (after CI) | Build and push image to `ghcr.io/s3rgiosan/compasso` |
+
+The Docker image is tagged with `latest` and the commit SHA. Compatible with [Watchtower](https://github.com/containrrr/watchtower) for automatic updates on self-hosted deployments.
+
 ---
 
 ## Extensibility Points
