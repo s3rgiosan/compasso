@@ -40,9 +40,9 @@ COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/web/dist ./apps/web/dist
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 
-# Create non-root user (UID/GID 1000) and data directory
-RUN addgroup -g 1000 -S compasso && adduser -u 1000 -S compasso -G compasso \
-    && mkdir -p /data && chown compasso:compasso /data
+# Create non-root user and data directory
+# Use the existing 'node' user (UID 1000) from the base image
+RUN mkdir -p /data && chown node:node /data
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -57,7 +57,7 @@ EXPOSE 5181
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:5181/api/health || exit 1
 
-USER compasso
+USER node
 
 # Start the server
 CMD ["node", "apps/api/dist/index.js"]
