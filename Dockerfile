@@ -4,7 +4,9 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install build tools for native modules (better-sqlite3)
+# Use -march=x86-64 to ensure compatibility with older CPUs (e.g., Synology NAS)
 RUN apk add --no-cache python3 make g++
+ENV CFLAGS="-march=x86-64" CXXFLAGS="-march=x86-64"
 
 # Copy package files
 COPY package*.json ./
