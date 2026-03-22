@@ -3,6 +3,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Install build tools for native modules (better-sqlite3)
+RUN apk add --no-cache python3 make g++
+
 # Copy package files
 COPY package*.json ./
 COPY apps/api/package.json ./apps/api/
@@ -18,17 +21,21 @@ COPY . .
 # Build all packages
 RUN npm run build
 
+# Prune dev dependencies, keeping native modules intact
+RUN npm prune --omit=dev
+
 # Stage 2: Production
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Install only production dependencies
-COPY package*.json ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/shared/package.json ./packages/shared/
-
-RUN npm ci --omit=dev
+# Copy dependencies with pre-compiled native modules from builder
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=builder /app/packages/shared/node_modules ./packages/shared/node_modules
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
+COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.json
 
 # Copy built files
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
