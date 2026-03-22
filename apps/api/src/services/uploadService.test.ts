@@ -58,7 +58,7 @@ describe('processUpload', () => {
   const mockParseFn = vi.fn();
 
   beforeEach(() => {
-    vi.mocked(getParser).mockReturnValue(mockParseFn);
+    vi.mocked(getParser).mockResolvedValue(mockParseFn);
   });
 
   it('should parse PDF and create a new ledger', async () => {
@@ -108,7 +108,7 @@ describe('processUpload', () => {
   });
 
   it('should throw AppError for unsupported bank ID', async () => {
-    vi.mocked(getParser).mockReturnValue(undefined);
+    vi.mocked(getParser).mockResolvedValue(undefined as any);
 
     await expect(processUpload(buffer, filename, 'unknown_bank', workspaceId)).rejects.toThrow(AppError);
     await expect(processUpload(buffer, filename, 'unknown_bank', workspaceId)).rejects.toThrow(
@@ -117,7 +117,7 @@ describe('processUpload', () => {
   });
 
   it('should throw AppError for bank without parser implementation', async () => {
-    vi.mocked(getParser).mockReturnValue(undefined);
+    vi.mocked(getParser).mockResolvedValue(undefined as any);
 
     await expect(processUpload(buffer, filename, 'unknown_bank', workspaceId)).rejects.toThrow(AppError);
   });

@@ -12,10 +12,8 @@ COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install dependencies and force rebuild better-sqlite3 from source
-# with baseline x86-64 to ensure compatibility with older CPUs (e.g., Synology NAS)
-ENV CFLAGS="-march=x86-64 -mtune=generic" CXXFLAGS="-march=x86-64 -mtune=generic"
-RUN npm ci --ignore-scripts && npm rebuild better-sqlite3 --build-from-source
+# Install dependencies
+RUN npm ci
 
 # Copy source code
 COPY . .

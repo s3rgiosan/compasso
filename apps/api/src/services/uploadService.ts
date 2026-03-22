@@ -29,7 +29,7 @@ export async function processUpload(
   bankId: string,
   workspaceId: number
 ): Promise<UploadResponse> {
-  const parse = getParser(bankId);
+  const parse = await getParser(bankId);
   if (!parse) {
     throw AppError.badRequest(
       `Unsupported bank: ${bankId}. Supported banks: ${Object.keys(BANK_CONFIGS).join(', ')}`
