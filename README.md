@@ -44,8 +44,8 @@ compasso/
 
 ### Prerequisites
 
-- Node.js 18+
-- npm 9+
+- Node.js 22+
+- npm 10+
 
 ### Installation
 
@@ -82,6 +82,9 @@ ALLOWED_ORIGINS=http://localhost:5180,http://127.0.0.1:5180
 
 # Database path (optional, defaults to ./data)
 DATABASE_PATH=./data
+
+# Cookie security (defaults to true in production, set to false for HTTP-only deployments)
+# SECURE_COOKIES=false
 
 # Email — optional, used for password reset emails (see below)
 # Option 1: SMTP (any provider)
@@ -141,7 +144,7 @@ npm run build
 
 ### Docker
 
-The Docker image is automatically built and pushed to GitHub Container Registry on every push to `main` (after CI passes).
+The Docker image is automatically built and pushed to GitHub Container Registry on every push to `main` (after CI passes). The container runs as a non-root user (`node`) for security.
 
 ```bash
 # Run with the pre-built image
@@ -159,6 +162,16 @@ docker run -d -p 5181:5181 -v ./data:/data compasso
 ```
 
 Environment variables are read from a `.env` file in the project root.
+
+#### Self-hosted (Synology, NAS, etc.)
+
+For HTTP-only deployments without a reverse proxy, set `SECURE_COOKIES=false` in your environment — otherwise session cookies won't be sent by the browser:
+
+```yaml
+environment:
+  - SECURE_COOKIES=false
+  - ALLOWED_ORIGINS=http://YOUR_IP:5181
+```
 
 #### Auto-updates with Watchtower
 
@@ -200,11 +213,12 @@ echo "YOUR_GITHUB_PAT" | docker login ghcr.io -u YOUR_USERNAME --password-stdin
 
 ### Adding Support for New Banks
 
-The project uses a registry pattern — only 3 files need to be touched:
+The project uses a registry pattern — 4 files need to be touched:
 
-1. Create a parser in `apps/api/src/parsers/<bank-slug>.ts` (exports a `BankParserDefinition`)
-2. Register it in `apps/api/src/parsers/registry.ts` (1 import + 1 array entry)
-3. Write tests in `apps/api/src/parsers/<bank-slug>.test.ts`
+1. Create parser data in `apps/api/src/parsers/<bank-slug>-data.ts` (exports config, patterns)
+2. Create parser in `apps/api/src/parsers/<bank-slug>.ts` (imports data, exports `BankParserDefinition` with parse function)
+3. Register data in `apps/api/src/parsers/registry.ts` (1 import + 1 array entry)
+4. Write tests in `apps/api/src/parsers/<bank-slug>.test.ts`
 
 See [`.github/BANK_PARSER_GUIDE.md`](.github/BANK_PARSER_GUIDE.md) for the full contributor guide.
 

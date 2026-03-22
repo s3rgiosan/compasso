@@ -10,9 +10,9 @@ This guide walks you through adding a new bank statement parser to Compasso. Fol
 PDF Buffer
   |
   v
-Parser (apps/api/src/parsers/<bank-slug>.ts)
-  |  - Exports a BankParserDefinition (config + patterns + parse fn)
-  |  - Extracts text from PDF
+Parser (apps/api/src/parsers/<bank-slug>.ts) ← lazy-loaded at upload time
+  |  - Imports data from <bank-slug>-data.ts
+  |  - Imports pdfjs-dist for PDF text extraction
   |  - Parses transactions, period dates
   |  - Generates file hash
   |
@@ -21,9 +21,9 @@ ParseResult { transactions, periodStart, periodEnd, fileHash }
   |
   v
 Registry (apps/api/src/parsers/registry.ts)
-  |  - Aggregates all parser definitions
+  |  - Imports data files, lazy-loads parsers on upload
   |  - Derives SUPPORTED_BANKS, BANK_CONFIGS, BANK_CATEGORY_PATTERNS
-  |  - Provides getParser(bankId) lookup
+  |  - Provides async getParser(bankId) lookup
   |
   v
 CategoryMatcher (apps/api/src/services/categoryMatcher.ts)
@@ -35,13 +35,14 @@ CategoryMatcher (apps/api/src/services/categoryMatcher.ts)
 UploadResponse → returned to client
 ```
 
-## Files to Touch (exactly 3)
+## Files to Touch (4 files)
 
 | # | File | Action |
 |---|------|--------|
-| 1 | `apps/api/src/parsers/<bank-slug>.ts` | Create parser with `BankParserDefinition` export |
-| 2 | `apps/api/src/parsers/<bank-slug>.test.ts` | Unit tests |
-| 3 | `apps/api/src/parsers/registry.ts` | Add 1 import + 1 array entry |
+| 1 | `apps/api/src/parsers/<bank-slug>-data.ts` | Create data file with config, transaction patterns, and category patterns |
+| 2 | `apps/api/src/parsers/<bank-slug>.ts` | Create parser with parse function (imports data + pdfjs-dist) |
+| 3 | `apps/api/src/parsers/<bank-slug>.test.ts` | Unit tests |
+| 4 | `apps/api/src/parsers/registry.ts` | Add 1 data import + 1 array entry + 1 lazy loader |
 
 No changes to `uploadService`, `constants`, `seed`, or `routes`.
 
@@ -135,17 +136,54 @@ interface BankCategoryPatterns {
 
 ## Step-by-Step Implementation
 
-### Step 1: Create the Parser
+### Step 1: Create the Data File
+
+**File:** `apps/api/src/parsers/<bank-slug>-data.ts`
+
+This file exports config and patterns only.
+
+```typescript
+import type { BankParserDefinition } from './types.js';
+
+type BankParserData = Omit<BankParserDefinition, 'parse'>;
+
+export const yourBankData: BankParserData = {
+  config: {
+    id: 'your_bank',
+    name: 'Your Bank',
+    country: 'XX',               // ISO 3166-1 alpha-2
+    currency: 'EUR',             // ISO 4217
+    dateFormat: 'DD/MM/YYYY',    // Date format used in the PDF
+    decimalFormat: 'european',   // or 'standard'
+  },
+  transactionPatterns: {
+    CARD_PURCHASE: /^Card Purchase/i,
+    DIRECT_DEBIT: /^Direct Debit/i,
+    TRANSFER_IN: /^Transfer From/i,
+    TRANSFER_OUT: /^Transfer To/i,
+    // Add patterns that match your bank's PDF format
+  },
+  categoryPatterns: {
+    Groceries: ['Supermarket', 'Grocery', 'Market'],
+    Fuel: ['Shell', 'BP', 'Gas Station'],
+    Dining: ['Restaurant', 'Cafe', 'Pizza'],
+    // Map category names to keywords found in this bank's descriptions
+  },
+};
+```
+
+### Step 2: Create the Parser
 
 **File:** `apps/api/src/parsers/<bank-slug>.ts`
 
-Create a self-contained module that exports a `BankParserDefinition` containing config, patterns, and the parse function.
+This file imports `pdfjs-dist` and the data file.
 
 ```typescript
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
 import type { ParsedTransaction, ParseResult } from '@compasso/shared';
 import { generateFileHash } from '../utils/fileHash.js';
 import type { BankParserDefinition } from './types.js';
+import { yourBankData } from './your-bank-data.js';
 
 interface TextItem {
   str: string;
@@ -240,49 +278,37 @@ export async function parseYourBankPDF(buffer: Buffer): Promise<ParseResult> {
 }
 
 export const yourBank: BankParserDefinition = {
-  config: {
-    id: 'your_bank',
-    name: 'Your Bank',
-    country: 'XX',               // ISO 3166-1 alpha-2
-    currency: 'EUR',             // ISO 4217
-    dateFormat: 'DD/MM/YYYY',    // Date format used in the PDF
-    decimalFormat: 'european',   // or 'standard'
-  },
-  transactionPatterns: {
-    CARD_PURCHASE: /^Card Purchase/i,
-    DIRECT_DEBIT: /^Direct Debit/i,
-    TRANSFER_IN: /^Transfer From/i,
-    TRANSFER_OUT: /^Transfer To/i,
-    // Add patterns that match your bank's PDF format
-  },
-  categoryPatterns: {
-    Groceries: ['Supermarket', 'Grocery', 'Market'],
-    Fuel: ['Shell', 'BP', 'Gas Station'],
-    Dining: ['Restaurant', 'Cafe', 'Pizza'],
-    // Map category names to keywords found in this bank's descriptions
-  },
+  ...yourBankData,
   parse: parseYourBankPDF,
 };
 ```
 
-### Step 2: Register in the Registry
+### Step 3: Register in the Registry
 
 **File:** `apps/api/src/parsers/registry.ts`
 
-Add one import and one array entry:
+Add one data import, one array entry, and one lazy loader:
 
 ```typescript
-import { yourBank } from './your-bank.js';
+import { yourBankData } from './your-bank-data.js';
 
-const definitions: BankParserDefinition[] = [
-  novoBanco,
-  yourBank,    // <-- add this
+const definitions: BankParserData[] = [
+  novoBancoData,
+  cgdData,
+  yourBankData,    // <-- add data here
 ];
+
+// In the parserLoaders object:
+const parserLoaders: Record<string, () => Promise<BankParserDefinition['parse']>> = {
+  novo_banco: async () => (await import('./novo-banco.js')).novoBanco.parse,
+  cgd: async () => (await import('./cgd.js')).cgd.parse,
+  your_bank: async () => (await import('./your-bank.js')).yourBank.parse,  // <-- add loader here
+};
 ```
 
-That's it. The registry automatically derives `SUPPORTED_BANKS`, `BANK_CONFIGS`, and `BANK_CATEGORY_PATTERNS` from the definitions array.
+The registry automatically derives `SUPPORTED_BANKS`, `BANK_CONFIGS`, and `BANK_CATEGORY_PATTERNS` from the definitions array.
 
-### Step 3: Write Tests
+### Step 4: Write Tests
 
 **File:** `apps/api/src/parsers/<bank-slug>.test.ts`
 
@@ -380,12 +406,14 @@ npm run lint
 
 ## PR Checklist
 
+- [ ] Data file created at `apps/api/src/parsers/<bank-slug>-data.ts`
 - [ ] Parser file created at `apps/api/src/parsers/<bank-slug>.ts`
-- [ ] Parser exports a named `BankParserDefinition` with config, patterns, and parse function
+- [ ] Parser exports a named `BankParserDefinition` using spread of data + parse function
 - [ ] Parser uses `generateFileHash` from `utils/fileHash.ts`
+- [ ] Parser imports `pdfjs-dist/build/pdf.mjs` (not the legacy build)
 - [ ] `amount` is always `Math.abs()` (positive)
 - [ ] `suggestedCategoryId` and `suggestedCategoryName` are both `null`
-- [ ] Parser registered in `apps/api/src/parsers/registry.ts` (1 import + 1 array entry)
+- [ ] Data registered in `apps/api/src/parsers/registry.ts`
 - [ ] Tests created at `apps/api/src/parsers/<bank-slug>.test.ts`
 - [ ] All tests pass: `npm run test:run -w @compasso/api`
 - [ ] Type-check passes: `npx tsc --noEmit -p apps/api/tsconfig.json`

@@ -7,15 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-03-22
+
 ### Added
 
 - CI/CD pipeline publishes Docker image to GitHub Container Registry on push to `main`
 - Docker image tagged with `latest` and commit SHA for versioning
+- `SECURE_COOKIES` environment variable for HTTP-only deployments (defaults to `true` in production)
+- `ALLOWED_ORIGINS` and `SECURE_COOKIES` in Docker Compose configuration
+- Docker entrypoint script with automatic data volume permission fixing
+- Non-root container execution (drops to `node` user via `su-exec`)
+- Container security hardening (`no-new-privileges`, memory limits)
+- Container health check with tuned start period for low-power hardware
 
 ### Changed
 
+- Upgrade to Node.js 22 LTS
 - Remove confirm password field from registration form
 - Docker Compose uses pre-built GHCR image instead of local build
+- Lazy-load PDF parsers to avoid loading `pdfjs-dist` at startup
+- Separate bank parser data (configs, patterns) from parse functions for lighter imports
+- Downgrade `pdfjs-dist` to v4 and use non-legacy build for broader CPU compatibility
+- Docker image runs as non-root `node` user with `su-exec` privilege dropping
+
+### Fixed
+
+- `pdfjs-dist` crash on CPUs without AVX instruction support (e.g., Synology Celeron J3355)
+- Session cookie not being set on HTTP-only deployments (added `SECURE_COOKIES` env var)
+- Container crash when data volume is owned by root from previous runs
 
 ## [1.0.0] - 2026-02-11
 

@@ -74,7 +74,7 @@ Compasso implements session-based authentication with secure cookie storage.
 | Component | Description |
 |-----------|-------------|
 | Session ID | 32-byte random hex stored in `sessions` table |
-| Cookie | `session_id` HTTP-only cookie with secure flag in production |
+| Cookie | `session_id` HTTP-only cookie with secure flag (configurable via `SECURE_COOKIES`) |
 | Expiration | Sessions expire after 30 days |
 | Storage | Cookie-based (primary) or Authorization header (Bearer token) |
 
@@ -364,10 +364,10 @@ All API error responses include a `code` field from `ErrorCode` for programmatic
 
 ### Parsers
 
-| Parser | File | Banks Supported |
-|--------|------|-----------------|
-| Novo Banco | `parsers/novobanco.ts` | Novo Banco (Portugal) - "Extrato Integrado" format |
-| CGD | `parsers/cgd.ts` | CGD / Caixa Geral de Depósitos (Portugal) |
+| Parser | Data File | Parser File | Banks Supported |
+|--------|-----------|-------------|-----------------|
+| Novo Banco | `parsers/novo-banco-data.ts` | `parsers/novo-banco.ts` | Novo Banco (Portugal) - "Extrato Integrado" format |
+| CGD | `parsers/cgd-data.ts` | `parsers/cgd.ts` | CGD / Caixa Geral de Depósitos (Portugal) |
 
 **Parser Features:**
 - European decimal format handling (1.234,56)
@@ -567,11 +567,11 @@ Type-safe API client with functions for all backend endpoints:
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| Node.js | 18+ | Runtime |
+| Node.js | 22+ | Runtime |
 | Express | 4.18.2 | Web framework |
 | TypeScript | 5.3.2 | Type safety |
 | better-sqlite3 | 9.2.2 | SQLite database |
-| pdf-parse | 1.1.1 | PDF text extraction |
+| pdfjs-dist | 4.10.38 | PDF text extraction |
 | Multer | 1.4.5 | File upload handling |
 | tsx | 4.6.2 | TypeScript execution |
 
@@ -598,11 +598,12 @@ The Docker image is tagged with `latest` and the commit SHA. Compatible with [Wa
 
 ### Adding New Bank Support
 
-The project uses a **registry pattern** — each parser is a self-contained module exporting a `BankParserDefinition` (config + patterns + parse function). Only 3 files need to be touched:
+The project uses a **registry pattern** with a data/parser split. Data files export config and patterns (loaded at startup for seeding). Parser files import `pdfjs-dist` and are lazy-loaded on upload.
 
-1. **Create parser** in `apps/api/src/parsers/<bank-slug>.ts` — export a `BankParserDefinition`
-2. **Register** in `apps/api/src/parsers/registry.ts` — add 1 import + 1 array entry
-3. **Write tests** in `apps/api/src/parsers/<bank-slug>.test.ts`
+1. **Create parser data** in `apps/api/src/parsers/<bank-slug>-data.ts`
+2. **Create parser** in `apps/api/src/parsers/<bank-slug>.ts`
+3. **Register** in `apps/api/src/parsers/registry.ts` — 1 data import + 1 array entry + 1 lazy loader
+4. **Write tests** in `apps/api/src/parsers/<bank-slug>.test.ts`
 
 The registry automatically derives `SUPPORTED_BANKS`, `BANK_CONFIGS`, and `BANK_CATEGORY_PATTERNS`. No changes needed in upload routes, constants, or seed files.
 
