@@ -37,6 +37,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
 COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.json
+# Copy workspace-level node_modules (non-hoisted dependencies like pdfjs-dist)
+COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 
 # Copy built files
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
