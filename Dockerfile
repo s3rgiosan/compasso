@@ -29,6 +29,9 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Install su-exec for dropping privileges in entrypoint
+RUN apk add --no-cache su-exec
+
 # Copy dependencies with pre-compiled native modules from builder
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
@@ -40,9 +43,12 @@ COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/web/dist ./apps/web/dist
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 
-# Create non-root user and data directory
-# Use the existing 'node' user (UID 1000) from the base image
+# Create writable directories for the node user
 RUN mkdir -p /data /app/uploads && chown node:node /data /app/uploads
+
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -54,10 +60,8 @@ ENV DATABASE_PATH=/data
 EXPOSE 5181
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:5181/api/health || exit 1
 
-USER node
-
-# Start the server
-CMD ["node", "apps/api/dist/index.js"]
+# Entrypoint fixes data directory permissions then drops to node user
+ENTRYPOINT ["docker-entrypoint.sh"]
