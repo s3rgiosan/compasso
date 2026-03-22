@@ -42,7 +42,7 @@ COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 
 # Create non-root user and data directory
 # Use the existing 'node' user (UID 1000) from the base image
-RUN mkdir -p /data && chown node:node /data
+RUN mkdir -p /data /app/uploads && chown node:node /data /app/uploads
 
 # Set environment variables
 ENV NODE_ENV=production
