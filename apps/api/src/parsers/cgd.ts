@@ -1,4 +1,4 @@
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
 import type { ParsedTransaction, ParseResult } from '@compasso/shared';
 import { generateFileHash } from '../utils/fileHash.js';
 import type { BankParserDefinition } from './types.js';
