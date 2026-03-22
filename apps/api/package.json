@@ -23,7 +23,7 @@
     "helmet": "^8.1.0",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^8.0.1",
-    "pdfjs-dist": "^5.4.530",
+    "pdfjs-dist": "^4.10.38",
     "zod": "^4.3.6"
   },
   "devDependencies": {
