@@ -4,9 +4,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install build tools for native modules (better-sqlite3)
-# Use -march=x86-64 to ensure compatibility with older CPUs (e.g., Synology NAS)
 RUN apk add --no-cache python3 make g++
-ENV CFLAGS="-march=x86-64" CXXFLAGS="-march=x86-64"
 
 # Copy package files
 COPY package*.json ./
@@ -14,8 +12,10 @@ COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install dependencies
-RUN npm ci
+# Install dependencies and force rebuild better-sqlite3 from source
+# with baseline x86-64 to ensure compatibility with older CPUs (e.g., Synology NAS)
+ENV CFLAGS="-march=x86-64 -mtune=generic" CXXFLAGS="-march=x86-64 -mtune=generic"
+RUN npm ci --ignore-scripts && npm rebuild better-sqlite3 --build-from-source
 
 # Copy source code
 COPY . .
