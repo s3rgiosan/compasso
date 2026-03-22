@@ -20,6 +20,7 @@ interface AppConfig {
   databasePath: string;
   nodeEnv: string;
   isProduction: boolean;
+  secureCookies: boolean;
   allowedOrigins: string[];
   smtp: SmtpConfig | null;
   resend: ResendConfig | null;
@@ -58,8 +59,12 @@ function loadConfig(): AppConfig {
     : null;
 
   const demoMode = process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1';
+  const isProduction = nodeEnv === 'production';
+  const secureCookies = process.env.SECURE_COOKIES !== undefined
+    ? process.env.SECURE_COOKIES === 'true'
+    : isProduction;
 
-  return { port, host, databasePath, nodeEnv, isProduction: nodeEnv === 'production', allowedOrigins, smtp, resend, demoMode };
+  return { port, host, databasePath, nodeEnv, isProduction, secureCookies, allowedOrigins, smtp, resend, demoMode };
 }
 
 export const config = loadConfig();

@@ -26,7 +26,7 @@ const router = Router();
 function setSessionCookie(res: import('express').Response, sessionId: string): void {
   res.cookie('session_id', sessionId, {
     httpOnly: true,
-    secure: config.isProduction,
+    secure: config.secureCookies,
     sameSite: 'lax',
     maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000,
   });
